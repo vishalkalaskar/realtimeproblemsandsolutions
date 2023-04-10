@@ -1,0 +1,5 @@
+https://spring.io/guides/gs/uploading-files/
+https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/file-upload-Spring-Boot-Ajax-example
+https://www.javainuse.com/spring/bootupload
+https://www.callicoder.com/spring-boot-file-upload-download-rest-api-example/
+https://makitweb.com/upload-file-with-angularjs-and-php/
