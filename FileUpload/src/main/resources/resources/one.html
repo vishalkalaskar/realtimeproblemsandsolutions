@@ -1,0 +1,17 @@
+<html>
+   <head>
+      <script src="https://code.angularjs.org/1.4.8/angular.js" data-semver="1.4.8" data-require="angular.js@1.4.8"></script>
+      <script src="appone.js"></script>
+   </head>
+   <body ng-app='myapp'>
+
+ <div ng-controller="userCtrl">
+  
+  <input type='file' name='file' id='file'><br/>
+  <input type='button' value='Upload' id='upload' ng-click='upload()' >
+  
+  <p>{{ response.name }}</p>
+ </div>
+
+</body>
+</html>
