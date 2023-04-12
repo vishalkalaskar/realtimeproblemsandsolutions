@@ -2,21 +2,22 @@ var app = angular.module('app', []);
 app.controller('MainCtrl', function($scope, $http) {
 
 	$scope.file = null;
+	$scope.filename='';
 	$scope.uploadfile = function(element)
 	 {
 
 		//alert("uploadfile function in execution");
 		var input = document.getElementById("file");
-
 		$scope.file = input.files[0];
-
+         $scope.filename = element.files[0].name;
+         //alert("filename "+ $scope.filename);
 		console.log("this file type " + $scope.file);
 
 	}
 	
     $scope.submitForm = function() {
 		
-		
+	
 		var fd = new FormData();
 		fd.append('file', $scope.file);
 
@@ -33,8 +34,17 @@ app.controller('MainCtrl', function($scope, $http) {
 
 		}).then(function(response) {
 
-			alert("file uploaded successfully");
-			console.log('File uploaded successfully:',response.data);
+			 alert("file uploaded successfully");
+			 //content only display after file submiting...
+			 $scope.fileName=$scope.filename;
+			 //console.log('File uploaded successfully:',response.data);
+			 console.log('File uploaded successfully:');
+			 console.log('File Name:',$scope.filename);
+		
+			 //Reset the input file type
+			 document.getElementById("file").value = null;
+			 $scope.myForm.$setPristine();
+			 $scope.myForm.$setUntouched();
 		  //return response.data;
 		}, function(error) {
 
