@@ -1,0 +1,16 @@
+<html>
+   <head>
+      <script src="https://code.angularjs.org/1.4.8/angular.js" data-semver="1.4.8" data-require="angular.js@1.4.8"></script>
+      <script src="app.js"></script>
+   </head>
+   <body ng-app='app'>
+
+ <div ng-controller="MainCtrl">
+  
+  <input type='file' name='file' id='file' onchange="angular.element(this).scope().uploadfile(this)"><br/>
+  <button type="submit" ng-click="submitForm()">Submit</button>
+
+ </div>
+
+</body>
+</html>
