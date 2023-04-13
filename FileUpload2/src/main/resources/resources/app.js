@@ -42,9 +42,9 @@ app.controller('MainCtrl', function($scope, $http) {
 			 console.log('File Name:',$scope.filename);
 		
 			 //Reset the input file type
-			 document.getElementById("file").value = null;
-			 $scope.myForm.$setPristine();
-			 $scope.myForm.$setUntouched();
+			  document.getElementById("file").value = null;
+			// $scope.myForm.$setPristine();
+			// $scope.myForm.$setUntouched();
 		  //return response.data;
 		}, function(error) {
 

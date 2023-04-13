@@ -7,11 +7,10 @@
 <body ng-app='app' ng-controller="MainCtrl">
 
 	<div> <!-- if want special ng-app and ng-controller u can this div -->
-      <form name="myForm" id="myForm">
-		<input type='file' name='file' id='file'
-			onchange="angular.element(this).scope().uploadfile(this)"><br />
+      <!-- <form name="myForm" id="myForm"> -->
+		<input type='file' name='file' id='file' onchange="angular.element(this).scope().uploadfile(this)"><br/>
 		<button type="submit" ng-click="submitForm()">Submit</button>
-    </form>
+    <!-- </form> -->
 
 	</div>
 
