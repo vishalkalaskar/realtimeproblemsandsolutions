@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html ng-app="apptwo">
+
+  <head>
+    <meta charset="utf-8" />
+    <title>AngularJS Plunker</title>
+    <script>document.write('<base href="' + document.location + '" />');</script>
+    <link rel="stylesheet" href="style.css" />
+    <script data-require="angular.js@1.5.x" src="https://code.angularjs.org/1.5.8/angular.js" data-semver="1.5.8"></script>
+    <script src="apptwo.js"></script>
+  </head>
+
+  <body ng-controller="twoCtrl">
+    <form>
+    <input type="file" id="jsonFile" file-upload="jsonFile" name="jsonFile"/>
+    <br/>
+    <br/>
+    <input type="submit" name="submitButton" id="submitButton" value="Submit" ng-click="uploadFile()"/>
+    </form>
+  </body>
+
+</html>

@@ -20,8 +20,8 @@ app.controller('MainCtrl', function($scope, $http) {
 	
 		var fd = new FormData();
 		fd.append('file', $scope.file);
-
-		$scope.url = "http://localhost:8087/uploadfile";
+        //console.log("fd"+fd);
+		$scope.url = "http://localhost:8082/uploadfile";
 
 		$http({
 
