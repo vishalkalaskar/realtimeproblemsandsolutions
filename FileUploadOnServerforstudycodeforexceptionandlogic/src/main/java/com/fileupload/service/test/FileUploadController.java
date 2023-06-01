@@ -21,37 +21,10 @@ public class FileUploadController {
 
 	@Autowired
 	private FileUploadHelper  fileUploadHelper;
-	
-	@PostMapping("/dev/uploadfile") 
-	  public ResponseEntity<Map<String,Object>> handleFileUpload(@RequestParam("file") MultipartFile file ) {
-
-	    String fileName = file.getOriginalFilename();
-	    try 
-	    {
-	     file.transferTo( new File("D:\\VishalK\\uploadfile" + fileName));
-	      //boolean f= fileUploadHelper.uploadFile(file);
-		  //System.out.println( "Value of F is   "+f);
-	      System.out.println("file upload succefully");
-	      System.out.println("file Name is "+fileName);
-	      Map<String,Object> res = new HashMap<>();
-	      res.put("success",true);
-	      res.put("message", "File uploaded successfully");
-	   // return ResponseEntity.ok("File uploaded successfully");
-	     return ResponseEntity.ok(res);
-	    }
-	    catch (Exception e) 
-	    {
-	    	Map<String,Object> res = new HashMap<>();
-		      res.put("success",false);
-		      res.put("message", "File uploaded Error");
-	      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
-	    } 
-	  }
-
-	
+		
 	@PostMapping(value="/dev/jsonFileUpload",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
 			produces= {MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<Map<String,Object>> UPDfileUpload(@RequestParam("file") MultipartFile file){
+	public ResponseEntity<Map<String,Object>> JSONfileUpload(@RequestParam("file") MultipartFile file){
 		
 		System.out.println("File name"+file.getOriginalFilename());
 		System.out.println("File Size"+file.getSize());
@@ -95,7 +68,7 @@ public class FileUploadController {
 	}
 	
 	@PostMapping("/dev/updFileUpload")
-	public ResponseEntity<Map<String,Object>>  JsonfileUpload(@RequestParam("updfile") MultipartFile file){
+	public ResponseEntity<Map<String,Object>>  UPDfileUpload(@RequestParam("updfile") MultipartFile file){
 		
 		System.out.println("File name"+file.getOriginalFilename());
 		System.out.println("File Size"+file.getSize());
@@ -109,17 +82,23 @@ public class FileUploadController {
          //return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Empty File,Please upload file with content");
    
 			}
-			if(!file.getContentType().equals("text/csv")) {
+			/*if(!file.getContentType().equals("text/upd")) {
 				  Map<String,Object> res = new HashMap<>();
 			      res.put("success",false);
-			      res.put("message", "Only .CSV File allowed");
+			      res.put("message", "Only .upd File allowed");
 		          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
 				//return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Only .CSV File allowed");
+			}*/
+			String updfileName=file.getOriginalFilename();
+			if(!updfileName.toLowerCase().endsWith(".upd")) {
+				  Map<String,Object> res = new HashMap<>();
+			      res.put("success",false);
+			      res.put("message", "Only .upd File allowed");
+		          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
 			}
-			
 			boolean f= fileUploadHelper.uploadFile(file);
 			if(f) {
-				System.out.println("File Uploaded successfuly ............");
+				System.out.println("UPD File Uploaded successfuly ............");
 				Map<String,Object> res = new HashMap<>();
 			      res.put("success",true);
 			      res.put("message", "File uploaded successfully");
