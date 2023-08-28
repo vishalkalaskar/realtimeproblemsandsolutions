@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bootstrap demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" type="text/css" href="/css/mainindex.css"> 
+  <script src="/js/indexjs.js"></script>
+    <style>
+    /* Custom CSS for tooltips */
+    .tooltip-inner {
+      background-color: black;
+      color: white;
+      padding: 8px 12px; /* Adjust padding as needed */
+      border-radius: 4px;
+    }
+    .tooltip.show {
+      opacity: 1; /* To keep the tooltip visible at all times */
+    }
+    /* Adjust tooltip position to overlap with the icon */
+    .tooltip[data-bs-placement^="left"]::before,
+    .tooltip[data-bs-placement^="right"]::before {
+      display: none;
+    }
+    
+    
+  </style>
+  
+</head>
+<body>
+  <div id="mySidebar" class="sidebar">
+    <a href="#home" data-text="Home" data-bs-toggle="tooltip" data-bs-placement="right" title="Home">
+      <i class="fa fa-fw fa-home"></i>
+      <span class="hide-text"> Home</span>
+      <span class="show-text">Home</span>
+    </a>
+    <a href="#services" data-text="Services" data-bs-toggle="tooltip" data-bs-placement="right" title="Services">
+      <i class="fa fa-fw fa-wrench"></i>
+      <span class="hide-text"> Services</span>
+      <span class="show-text">Services</span>
+    </a>
+    <a href="#clients" data-text="Clients" data-bs-toggle="tooltip" data-bs-placement="right" title="Clients">
+      <i class="fa fa-fw fa-user"></i>
+      <span class="hide-text"> Clients</span>
+      <span class="show-text">Clients</span>
+    </a>
+    <a href="#contact" data-text="Contact" data-bs-toggle="tooltip" data-bs-placement="right" title="Contact">
+      <i class="fa fa-fw fa-envelope"></i>
+      <span class="hide-text"> Contact</span>
+      <span class="show-text">Contact</span>
+    </a>
+  </div>
+
+  <button id="openCloseBtn" class="openbtn">☰</button>
+
+  <div id="main">
+    <h2>Collapsed Sidebar</h2>
+    <p>Click on the hamburger menu/bar icon to open the sidebar, and push this content to the right.</p>
+  </div>
+ <script>
+ document.addEventListener("DOMContentLoaded", function() {
+   // ... (sidebar open/close and icon name toggle script)
+	 // Initialize tooltips and sidebar state
+     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+       return new bootstrap.Tooltip(tooltipTriggerEl);
+     });
+
+     var sidebar = document.getElementById("mySidebar");
+     var openCloseBtn = document.getElementById("openCloseBtn");
+
+     openCloseBtn.addEventListener("click", function() {
+       var isOpen = sidebar.classList.contains("open");
+
+       if (isOpen) {
+         // Sidebar is open, enable tooltips
+         tooltipList.forEach(function(tooltip) {
+           tooltip.enable();
+         });
+       } else {
+         // Sidebar is closed, disable tooltips
+         tooltipList.forEach(function(tooltip) {
+           tooltip.disable();
+         });
+       }
+
+       // ... (toggleSidebar logic)
+
+     });
+   });
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+</body>
+</html>

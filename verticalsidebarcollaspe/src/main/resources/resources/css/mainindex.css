@@ -1,0 +1,77 @@
+body {
+    font-family: "Lato", sans-serif;
+    margin: 0; /* Added to reset body margin */
+  }
+
+  .sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 60px;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 10px;
+  }
+
+  .sidebar a {
+    padding: 8px 8px 8px 8px; /* Modified padding for the icons */
+    text-decoration: none;
+    font-size: 20px; /* Adjusted the font size for the icons */
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+  }
+  
+    /* New rule to change icon color on hover */
+  .sidebar a:hover {
+    color: #fff; /* White color on hover */
+  } 
+
+  .sidebar a .hide-text {
+    display: inline;
+  }
+
+  .sidebar a .show-text {
+    display: none;
+  }
+
+  .sidebar.open a .hide-text {
+    display: none;
+  }
+
+  .sidebar.open a .show-text {
+    display: inline;
+  }
+
+  .sidebar a:hover .hide-text {
+    display: none;
+  }
+
+  .sidebar a:hover .show-text {
+    display: inline;
+  }
+
+  .openbtn {
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #111;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    position: fixed; /* Added to fix the button position */
+    top: 0; /* Adjust top position as per your requirement */
+    left: 15px; /* Adjust left position as per your requirement */
+  }
+
+  .openbtn:hover {
+    background-color: #444;
+  }
+
+  #main {
+    transition: margin-left .5s;
+    padding: 16px;
+    margin-left: 0; /* Adjust the margin to push content to the right when the sidebar is open */
+  }

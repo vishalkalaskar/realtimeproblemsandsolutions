@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link href="css/style.css" rel="stylesheet" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet"/>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="styles.css">
+	<link href = "https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet"/>
+	 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+	<script src="js/app.js"></script>
+</head>
+  
+  <body ng-app="myApp" ng-controller="myController">
+  <div class="sidebar close">
+
+    <!--<div class="logo-details">
+      <i class='bx bxl-c-plus-plus'></i>
+      <span class="logo_name">Tata Motors</span>
+    </div>-->
+    <ul class="nav-links">
+ <img src="images/tatalogo_white.png" alt="Tata_Mototrs_logo" style="height: 34px;  margin-top: -10px; margin-left: 18px;">
+      <li class="active">
+		    <div class="iocn-link">
+          <a href="#">
+            <span class="link_name" style="position: absolute; left:80px; top:-40px; color:white;">CVDAP</span>
+          </a>
+        </div>
+		  		       
+        <div class="iocn-link">
+          <a href="#">
+            <i class='fas fa-photo-video' ></i>
+            <span class="link_name">Message Type</span>
+          </a>
+          <i class='bx bxs-chevron-down arrow' ></i>
+        </div>
+        <ul class="sub-menu">
+			
+          <li><a class="link_name" href="#">Message Type</a></li>
+       <!--    <li><a href="#">Telemetry</a></li> -->
+          <li ng-click="changeContent('Telemetry')"><a href="#">Telemetry</a></li>
+          <li><a href="#">Alert</a></li>
+          <li><a href="#">Event</a></li>
+          <li><a href="#">Raw Can</a></li>
+          <li><a href="#">Tcu log</a></li>
+          <li><a href="#">Decoded Can</a></li>
+          <li><a href="#">Iso DecodedCan</a></li>
+          <li><a href="#">Icbgeneric Can</a></li>
+          <li><a href="#">CVICB ISO DTC CAN</a></li>
+          <li><a href="#">PvGenericCan</a></li>
+          <li><a href="#">PvdiagnosticCan</a></li>
+          <li><a href="#">ChargingTelemtry</a></li>
+        </ul>
+      </li>
+      <li>
+        <div class="iocn-link">
+          <a href="#">
+            <i class='fas fa-download' ></i>
+            <span class="link_name">Download</span>
+          </a>
+        <!--  <i class='bx bxs-chevron-down arrow' ></i>-->
+        </div>
+        <ul class="sub-menu">
+          <li><a class="link_name" href="#">Download</a></li>
+         <!-- <li><a href="#">Web Design</a></li>
+          <li><a href="#">Login Form</a></li>
+          <li><a href="#">Card Design</a></li>-->
+        </ul>
+      </li>
+      <li>
+        <a href="#">
+          <i class='bx bx-pie-chart-alt-2' ></i>
+          <span class="link_name">Statistics</span>
+        </a>
+        <ul class="sub-menu blank">
+          <li><a class="link_name" href="#">Statistics</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#">
+          <i class='bx bx-line-chart' ></i>
+          <span class="link_name">Chart</span>
+        </a>
+        <ul class="sub-menu blank">
+          <li><a class="link_name" href="#">Chart</a></li>
+        </ul>
+      </li>
+      <li>
+      <!--  <div class="iocn-link">
+          <a href="#">
+            <i class='bx bx-plug' ></i>
+            <span class="link_name">Plugins</span>
+          </a>
+          <i class='bx bxs-chevron-down arrow' ></i>
+        </div>
+        <ul class="sub-menu">
+          <li><a class="link_name" href="#">Plugins</a></li>
+          <li><a href="#">UI Face</a></li>
+          <li><a href="#">Pigments</a></li>
+          <li><a href="#">Box Icons</a></li>
+        </ul>
+      </li>-->
+      <li>
+        <a href="#">
+          <i class="fas fa-map-marker-alt "></i>
+          <span class="link_name">Map</span>
+        </a>
+        <ul class="sub-menu blank">
+          <li><a class="link_name" href="#">Map</a></li>
+        </ul>
+      </li>
+     <!-- <li>
+        <a href="#">
+          <i class='bx bx-history'></i>
+          <span class="link_name">History</span>
+        </a>
+        <ul class="sub-menu blank">
+          <li><a class="link_name" href="#">History</a></li>
+        </ul>
+      </li>-->
+      <!--<li>
+        <a href="#">
+          <i class='bx bx-cog' ></i>
+          <span class="link_name">Setting</span>
+        </a>
+        <ul class="sub-menu blank">
+          <li><a class="link_name" href="#">Setting</a></li>
+        </ul>
+      </li>-->
+    <!--  <li>
+    <div class="profile-details">
+      <div class="profile-content">
+        <img src="https://gravatar.com/avatar/f57bddebd1edf91412d5d68702530099" alt="profileImg">
+      </div>
+     <div class="name-job">
+        <div class="profile_name">Dumitru Chirutac</div>
+        <div class="job">Web Desginer</div>
+      </div>
+     <i class='fas fa-sign-out-alt' ></i>
+    </div>
+  </li>
+</ul>-->
+  </div>
+  <section class="home-section">
+
+    <div class="home-content" style="background-color: darkslateblue ;color:white";>
+
+      <i class='bx bx-menu' ></i>
+
+   <center>
+      <div style="font-size:20px; margin-left: 296px";><b style="color: red;">C</b><b style="color: orange;">V</b><b
+							style="color: rgb(242, 147, 115);">D</b><b style="color: limegreen ;">A</b><b
+							style="color: rgb(0, 128, 255) ;">P</b>: <em><b style="color: white ;">D</b>igital <b style="color: white ;">T</b>win <b  style="color: white ;">I</b>nitiative
+					</div>
+     <div style="font-size:13px; margin-left: 294px";><b style="color: red;">C</b>onnected <b
+							style="color: orange;">V</b>ehicle <b style="color: rgb(242, 147, 115);">D</b>ata validation
+						and <b style="color: limegreen ;">A</b>nalytics <b
+							style="color: rgb(0, 128, 255) ;">P</b>latform</div>
+				</div>
+				<!--<img src="images/TATA_White_Logo.png" alt="Tata_Mototrs_logo" style="height: 1.1vw; width:90%; margin-top: 10px;
+    margin-left: 10px;">-->
+      <!--center tag ends here -->
+    </center>
+  <!--   </div> -->
+<div id ="vinconstantrow">
+     <h3>this is vin constant row</h3>
+  </div>
+  <!-- Content Area to Change -->
+  <div id="changewithclick">
+    <!-- Content will be loaded here -->
+    <div ng-include="selectedContent"></div>
+  </div>
+
+  
+    <div class="footer" style="font-size: 13px; margin-top: 520px; margin-left: 120px;">
+  <p> Copyright © 2019-23 : Tata Motors Limited. All Rights Reserved. Designed , Developed and Maintained by TML DPDS Team  </p>
+</div>
+  </section>
+   <script>
+    var app = angular.module('myApp', []);
+    app.controller('myController', function($scope) {
+      // Function to change content based on clicked menu item
+      $scope.changeContent = function(content) {
+        // Update the selectedContent variable to load the corresponding content
+       // $scope.selectedContent = content + ".html"; // Assuming content files are named like "Telemetry.html"
+        $scope.selectedContent= "/messagepage/" + content + ".html"; 
+
+      };
+    });
+  </script>
+  </body>
+   
+  </html>

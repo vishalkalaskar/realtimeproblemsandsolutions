@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="/js/indexjs.js"></script>
+<style>
+  body {
+    font-family: "Lato", sans-serif;
+  }
+
+  .sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 60px;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+  }
+
+  .sidebar a {
+    padding: 8px 8px 8px 8px;
+    text-decoration: none;
+    font-size: 20px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+  }
+  
+  /* Change icon color on hover */
+  .sidebar a:hover {
+    color: #fff;
+  } 
+
+  .sidebar a .hide-text {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    transition: .2s;
+  }
+
+  .sidebar.open a .hide-text {
+    max-width: 200px;
+    margin-left: 8px;
+    opacity: 1;
+  }
+
+  .sidebar a:hover .hide-text {
+    max-width: 200px;
+    margin-left: 8px;
+    opacity: 1;
+  }
+
+  .openbtn {
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #111;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+  }
+
+  .openbtn:hover {
+    background-color: #444;
+  }
+
+  #main {
+    transition: margin-left .5s;
+    padding: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div id="mySidebar" class="sidebar">
+  <!-- ... your sidebar links ... -->
+  <a href="#home" data-text="Home"><i class="fa fa-fw fa-home"></i><span class="hide-text"> Home</span></a>
+  <a href="#services" data-text="Services"><i class="fa fa-fw fa-wrench"></i><span class="hide-text"> Services</span></a>
+  <a href="#clients" data-text="Clients"><i class="fa fa-fw fa-user"></i><span class="hide-text"> Clients</span></a>
+  <a href="#contact" data-text="Contact"><i class="fa fa-fw fa-envelope"></i><span class="hide-text"> Contact</span></a>
+</div>
+
+<div id="main">
+  <button id="openCloseBtn" class="openbtn" onclick="toggleSidebar()">☰</button>  
+  <h2>Collapsed Sidebar</h2>
+  <p>Click on the hamburger menu/bar icon to open the sidebar, and push this content to the right.</p>
+</div>
+</body>
+</html>

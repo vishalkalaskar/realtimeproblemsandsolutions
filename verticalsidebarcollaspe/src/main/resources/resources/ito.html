@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bootstrap demo</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
+	crossorigin="anonymous">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<!-- <link rel="stylesheet" type="text/css" href="/css/three.css">  -->
+<!-- <script src="/js/threejs.js"></script> -->
+<style>
+.sidebar {
+	height: 100%;
+	width: 0;
+	position: fixed;
+	z-index: 1;
+	top: 60px;
+	left: 0;
+	background-color: #111;
+	overflow-x: hidden;
+	transition: 0.5s;
+	padding-top: 40px;
+}
+
+/* Apply the custom pop-out label styles */
+.sidebar a.label-button {
+ position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+   /*  padding: 8px; */
+    padding: 8px 8px 8px 8px;
+   /*  border: 1px solid #ccc;  */
+   /*  border-radius: 8px;  */
+    background: black;
+    transition: .2s;
+    text-decoration: none;
+    color: white;
+    font-size: 19px;
+	
+}
+
+.sidebar a.label-button .fa {
+	font-size: 19px;
+	transition: .2s;
+}
+
+.sidebar a.label-button .label-hidden {
+	max-width: 0;
+	opacity: 0;
+	max-height: 1em;
+	white-space: nowrap;
+	transition: .2s;
+}
+
+.sidebar a.label-button:hover .label-hidden {
+	max-width: 200px;
+	margin-left: 8px;
+	opacity: 1;
+}
+/*sidebar label hide and show*/
+.sidebar a .hide-text {
+	display: inline;
+}
+
+.sidebar a .show-text {
+	display: none;
+}
+
+.sidebar.open a .hide-text {
+	display: none;
+}
+
+.sidebar.open a .show-text {
+	display: inline;
+}
+
+.sidebar a:hover .hide-text {
+	display: none;
+}
+
+.sidebar a:hover .show-text {
+	display: inline;
+}
+
+/* Rest of your styles */
+.sidebar.open {
+	width: 250px;
+}
+
+.sidebar.open a.label-button .fa {
+	font-size: 24px;
+}
+
+.sidebar.open a.label-button {
+	display: block;
+}
+
+.openbtn {
+	font-size: 20px;
+	cursor: pointer;
+	background-color: #111;
+	color: white;
+	padding: 10px 15px;
+	border: none;
+	position: fixed;
+	top: 0;
+	left: 15px;
+}
+
+.openbtn:hover {
+	background-color: #444;
+}
+
+#main {
+	transition: margin-left .5s;
+	padding: 16px;
+	margin-left: 0;
+}
+</style>
+</head>
+<body>
+	<div id="mySidebar" class="sidebar">
+		<a href="#home" class="label-button">
+			<i class="fa fa-fw fa-home"></i>
+			<span class="label-hidden hide-text">Home</span>
+			<span class="label-hidden show-text">Home</span>
+		</a>
+		<a href="#services" class="label-button">
+			<i class="fa fa-fw fa-wrench"></i>
+			<span class="label-hidden hide-text">Services</span>
+			<span class="label-hidden show-text">Services</span>
+		</a>
+		<a href="#clients" class="label-button">
+			<i class="fa fa-fw fa-user"></i>
+			<span class="label-hidden hide-text">Clients</span>
+			<span class="label-hidden show-text">Clients</span>
+		</a>
+		<a href="#contact" class="label-button">
+			<i class="fa fa-fw fa-envelope"></i>
+			<span class="label-hidden hide-text">Contact</span>
+			<span class="label-hidden show-text">Contact</span>
+		</a>
+	</div>
+
+	<button id="openCloseBtn" class="openbtn">☰</button>
+
+	<div id="main">
+		<h2>Collapsed Sidebar</h2>
+		<p>Click on the hamburger menu/bar icon to open the sidebar, and push this content to the right.</p>
+	</div>
+
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		var sidebar = document.getElementById("mySidebar");
+		var mainContent = document.getElementById("main");
+		var openCloseBtn = document.getElementById("openCloseBtn");
+		var sidebarLinks = document.querySelectorAll(".sidebar a");
+
+		// Set the initial state to closed
+		sidebar.style.width = "50px";
+		mainContent.style.marginLeft = "50px";
+		openCloseBtn.innerText = "☰";
+
+		// Toggle the sidebar state and icon names
+		function toggleSidebar() {
+			if (sidebar.classList.contains("open")) {
+				sidebar.style.width = "50px";
+				mainContent.style.marginLeft = "50px";
+				openCloseBtn.innerText = "☰";
+			} else {
+				sidebar.style.width = "250px";
+				mainContent.style.marginLeft = "250px";
+				openCloseBtn.innerText = "☰";
+			}
+			sidebar.classList.toggle("open");
+			updateIconNamesVisibility();
+		}
+
+		// Update icon names visibility
+		function updateIconNamesVisibility() {
+			var hideTextClass = ".hide-text";
+			var showTextClass = ".show-text";
+
+			sidebarLinks.forEach(function(link) {
+				link.querySelector(hideTextClass).style.display = sidebar.classList.contains("open") ? "none" : "inline";
+				link.querySelector(showTextClass).style.display = sidebar.classList.contains("open") ? "inline" : "none";
+			});
+		}
+		
+		// Enable pop-out labels
+	    function enablePopOutLabels() {
+	        sidebarLinks.forEach(function(link) {
+	            link.classList.add("label-button");
+	            link.classList.remove("disabled");
+	        });
+	    }
+
+	    // Disable pop-out labels
+	    function disablePopOutLabels() {
+	        sidebarLinks.forEach(function(link) {
+	            link.classList.remove("label-button");
+	            link.classList.add("disabled");
+	        });
+	    }
+
+		// Attach the toggle function to the button click event
+		openCloseBtn.addEventListener("click", toggleSidebar);
+	});
+	</script>	
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+		crossorigin="anonymous"></script>
+</body>
+</html>

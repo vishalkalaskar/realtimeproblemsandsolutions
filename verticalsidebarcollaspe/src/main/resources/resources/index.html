@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="/js/indexjs.js"></script>
+<style>
+  body {
+    font-family: "Lato", sans-serif;
+  }
+
+  .sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 60px;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+  }
+
+  .sidebar a {
+    padding: 8px 8px 8px 8px; /* Modified padding for the icons */
+    text-decoration: none;
+    font-size: 20px; /* Adjusted the font size for the icons */
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+  }
+  
+    /* New rule to change icon color on hover */
+  .sidebar a:hover {
+    color: #fff; /* White color on hover */
+  } 
+
+  .sidebar a .hide-text {
+    display: inline;
+  }
+
+  .sidebar a .show-text {
+    display: none;
+  }
+
+  .sidebar.open a .hide-text {
+    display: none;
+  }
+
+  .sidebar.open a .show-text {
+    display: inline;
+  }
+
+  .sidebar a:hover .hide-text {
+    display: none;
+  }
+
+  .sidebar a:hover .show-text {
+    display: inline;
+  }
+
+  .openbtn {
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #111;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+  }
+
+  .openbtn:hover {
+    background-color: #444;
+  }
+
+  #main {
+    transition: margin-left .5s;
+    padding: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div id="mySidebar" class="sidebar">
+  <!-- ... your sidebar links ... -->
+  <a href="#home" data-text="Home"><i class="fa fa-fw fa-home"></i><span class="hide-text"> Home</span><span class="show-text">Home</span></a>
+  <a href="#services" data-text="Services"><i class="fa fa-fw fa-wrench"></i><span class="hide-text"> Services</span><span class="show-text">Services</span></a>
+  <a href="#clients" data-text="Clients"><i class="fa fa-fw fa-user"></i><span class="hide-text"> Clients</span><span class="show-text">Clients</span></a>
+  <a href="#contact" data-text="Contact"><i class="fa fa-fw fa-envelope"></i><span class="hide-text"> Contact</span><span class="show-text">Contact</span></a>
+</div>
+
+<div id="main">
+  <button id="openCloseBtn" class="openbtn" onclick="toggleSidebar()">☰</button>  
+  <h2>Collapsed Sidebar</h2>
+  <p>Click on the hamburger menu/bar icon to open the sidebar, and push this content to the right.</p>
+</div>
+<script>
+//Add this script to open the sidebar on page load 
+window.addEventListener('load', function() {
+  var sidebar = document.getElementById("mySidebar");
+  var mainContent = document.getElementById("main");
+  var openCloseBtn = document.getElementById("openCloseBtn");
+  var sidebarLinks = document.querySelectorAll(".sidebar a");
+
+  // Set the initial state to closed
+  sidebar.style.width = "50px";
+  mainContent.style.marginLeft = "50px";
+  openCloseBtn.innerText = "☰";
+
+  // Hide icon names on page load
+  for (var i = 0; i < sidebarLinks.length; i++) {
+    sidebarLinks[i].querySelector(".hide-text").style.display = "none";
+    sidebarLinks[i].querySelector(".show-text").style.display = "none";
+  }
+
+  // Show icon names when opening the sidebar
+  function showIconNames() {
+    for (var i = 0; i < sidebarLinks.length; i++) {
+      sidebarLinks[i].querySelector(".hide-text").style.display = "none";
+      sidebarLinks[i].querySelector(".show-text").style.display = "inline";
+    }
+  }
+
+  // Hide icon names when closing the sidebar
+  function hideIconNames() {
+    for (var i = 0; i < sidebarLinks.length; i++) {
+      sidebarLinks[i].querySelector(".hide-text").style.display = "inline";
+      sidebarLinks[i].querySelector(".show-text").style.display = "none";
+    }
+  }
+
+  // Toggle the sidebar state and icon names
+  function toggleSidebar() {
+	  if (sidebar.classList.contains("open")) {
+		    sidebar.style.width = "50px";
+		    mainContent.style.marginLeft = "50px";
+		    openCloseBtn.innerText = "☰";
+
+		    // Hide icon names when closing the sidebar
+		    for (var i = 0; i < sidebarLinks.length; i++) {
+		      sidebarLinks[i].querySelector(".hide-text").style.display = "none";
+		      sidebarLinks[i].querySelector(".show-text").style.display = "none";
+		    }
+		  } else {
+		    sidebar.style.width = "250px";
+		    mainContent.style.marginLeft = "250px";
+		    openCloseBtn.innerText = "☰";
+		    
+		    // Show icon names when opening the sidebar
+		    for (var i = 0; i < sidebarLinks.length; i++) {
+		      sidebarLinks[i].querySelector(".hide-text").style.display = "inline";
+		      sidebarLinks[i].querySelector(".show-text").style.display = "none";
+		    }
+		  }
+    sidebar.classList.toggle("open");
+  }
+
+  // Attach the toggle function to the button click event
+  openCloseBtn.addEventListener("click", toggleSidebar);
+});
+
+
+</script>
+</body>
+</html>

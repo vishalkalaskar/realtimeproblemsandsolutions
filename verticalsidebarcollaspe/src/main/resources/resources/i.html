@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    a.button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #eee;
+      transition: .2s;
+    }
+
+    .material-icons {
+      font-size: 24px;
+      transition: .2s;
+    }
+
+    .label-hidden {
+      max-width: 0;
+      opacity: 0;
+      max-height: 1em;
+      white-space: nowrap;
+      transition: .2s;
+    }
+
+    a.button:hover .label-hidden {
+      max-width: 200px;
+      margin-left: 8px;
+      opacity: 1;
+    }
+  </style>
+  <title>Button Example</title>
+</head>
+<body>
+  <a class="button button-small"
+     target="_blank" rel="noopener noreferrer"
+     href="https://www.google.com/maps/search/StationNameHere">
+    <i class="material-icons">map</i>
+    <span class="label-hidden">Show location</span>
+  </a>
+</body>
+</html>
