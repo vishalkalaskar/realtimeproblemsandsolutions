@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chunked File Upload Example</title>
+</head>
+<body>
+    <h1>Chunked File Upload Example</h1>
+    
+    <form id="fileUploadForm" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" accept=".jpg,.png,.pdf,.upd" />
+        <input type="hidden" id="chunkNumber" name="chunkNumber" value="1" />
+        <input type="hidden" id="totalChunks" name="totalChunks" value="1" />
+        <input type="hidden" id="filename" name="filename"/>
+        <button type="button" onclick="uploadFile()">Upload File</button>
+    </form>
+    
+    <div id="progress" style="display: none;">
+        Uploading... <span id="progressPercentage">0%</span>
+    </div>
+    
+    <div id="message"></div>
+    
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const chunkNumberInput = document.getElementById('chunkNumber');
+        const totalChunksInput = document.getElementById('totalChunks');
+        const filenameInput = document.getElementById('filename');
+        const progress = document.getElementById('progress');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const message = document.getElementById('message');
+
+        function uploadFile() {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('chunkNumber', chunkNumberInput.value);
+            formData.append('totalChunks', totalChunksInput.value);
+            formData.append('filename', filenameInput.value);
+
+            const xhr = new XMLHttpRequest();
+
+            // Track upload progress
+            xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable) {
+                    const percent = (event.loaded / event.total) * 100;
+                    progress.style.display = 'block';
+                    progressPercentage.innerText = percent.toFixed(2) + '%';
+                }
+            });
+
+            xhr.open('POST', '/api/upload', true);
+
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        message.innerText = 'File uploaded successfully!';
+                    } else {
+                        message.innerText = 'File upload failed.';
+                    }
+                }
+            };
+
+            xhr.send(formData);
+        }
+    </script>
+</body>
+</html>
