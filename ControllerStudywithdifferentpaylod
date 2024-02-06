@@ -1,0 +1,971 @@
+package com.map.service.controller;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+
+import com.map.service.activitylog.ActivityLog;
+import com.map.service.activitylog.ActivityService;
+import com.map.service.activitylog.ActivityType;
+import com.map.service.exception.NoVinAssignedException;
+import com.map.service.ividms.api.utility.LoginService;
+import com.map.service.logger.AppLogger;
+//import com.map.service.logger.AppLogger;
+import com.map.service.security.jwt.JWTUtility;
+import com.map.service.security.user.UserService;
+import com.map.service.security.user.UserTokenService;
+import com.map.service.user.vin.UserVinMapService;
+
+@RestController
+@CrossOrigin("*")
+public class IvidmsController {
+
+	@Value("${ividms.api.host}")
+	private String ividmshost;
+
+	@Value("${ividms.api.shadowname}")
+	private String shadowname;
+
+	@Value("${ividms.api.classicshadowname}")
+	private String classicshadowname;
+
+	@Value("${ividms.api.deviceId}")
+	private String deviceid;
+
+	@Value("${cert.keystore.path}")
+	private String keystorePath;
+
+	@Value("${cert.keystore.pass}")
+	private String keystorePass;
+
+	@Value("${ividms.api.deviceIdupdate}")
+	private String deviceIdupdate;
+
+	@Value("${ividms.api.commands}")
+	private String commands;
+
+	@Value("${ividms.api.commandstid}")
+	private String commandstid;
+
+	@Value("${ividms.api.commandtid}")
+	private String commandtid;
+
+	@Value("${ividms.api.allactivedevice}")
+	private String allactivedevice;
+	
+	@Value("${ividms.api.devices}")
+	private String devices;
+	
+	@Value("${ividms.api.allInactivedevice}")
+	private String allInactivedevice;
+	
+	@Value("${ividms.api.totalcount}")
+	private String totalcount;
+	
+	@Value("${ividms.api.messagetypeNew}")
+	private String messagetypeNew;
+	
+	@Value("${ividms.api.Swversion}")
+	private String swv;
+	
+	@Value("${ividms.api.vehicleVC}")
+	private String vehicleVc;
+	
+	//ividms.api.initiatecampaign
+	@Value("${ividms.api.initiatecampaign}")
+	private String initiatecampaign ;
+	
+	@Autowired
+	private LoginService loginService;
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private JWTUtility jwtUtility;
+
+	@Autowired
+	private UserTokenService userTokenService;
+
+	@Autowired
+	private ActivityService activityService;
+
+	@Autowired
+	private UserVinMapService userVinMapService;
+
+	public static String gVin;
+	public static String gFeatureid;
+
+	@GetMapping("/prod/t/iot/dms/shadow")
+	public ResponseEntity<?> accvin(@RequestParam(value = "vin", required = true) String vin,
+			HttpServletRequest request) throws FileNotFoundException, NoSuchAlgorithmException, CertificateException,
+			KeyStoreException, IOException {
+
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		StringBuilder builder = AppLogger.createLogStringBuilder(request, user, "vin");
+		Marker loginMarker = MarkerFactory.getMarker("vin");
+		ActivityLog log = new ActivityLog(request, user, ActivityType.VEHICLE_SELECTION);
+		System.out.println(user);
+
+		try {
+			// String vRole = userVinMapService.checkUserVinMap(user, vin);
+			// System.err.println("Count:-" + vRole);
+			/*
+			 * String vincount = userVinMapService.checkUserVinMap(user, vin);
+			 * System.err.println("Count:-" + vincount);
+			 */
+			String userRole = userVinMapService.userRole(user);
+			String vincount = userVinMapService.checkUserVinMap(user, vin);
+			
+			
+			
+			System.err.println("UserROle:-"+userRole);
+			System.err.println("Count:-" + vincount);
+
+			if (Integer.parseInt(userRole) == 1) {
+				System.err.println("User " + user + "  have access of " + "vin  " + vin);
+				// vin_cat = userVinMapService.findByVinANDUserID(user, vin);
+				String url = ividmshost + shadowname;
+				String mainurl = url.replace("{vin}", vin);
+				System.out.print("shadowname---" + mainurl);
+				// System.out.println(loginService.getToken());
+				RestTemplate restTemplate = getRestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+				headers.add("Authorization", "Bearer " + loginService.getToken());
+				HttpEntity<String> entity = new HttpEntity<String>(headers);
+				System.out.println("this is shadowname method excuate");
+				// UserVinMap userVinMap;
+				String response = restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+				// UserVinMap response= restTemplate.exchange(mainurl, HttpMethod.GET,
+				// userVinMap, String.class).getBody();
+				return new ResponseEntity<Object>(response, HttpStatus.OK);
+				// return new ResponseEntity<UserVinMap>(vin,HttpStatus.OK);
+			}
+
+			else {
+				//System.err.println("User " + user + "  dont have access of " + "vin  " + vin);			
+				String response="you don't have access for this vin";
+				return new ResponseEntity<String>(response,HttpStatus.BAD_REQUEST);
+				
+			}
+
+		} 
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log.setData(vin + " (Failure): " + e.getMessage());
+			activityService.save(log);
+			builder.append(", Data: failure " + e);
+			AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+
+	}
+	//devices start
+	@GetMapping("/prod/t/iot/dms/devices")
+	public ResponseEntity<?> devices(@RequestParam(value = "vin", required = true) String vin,
+			HttpServletRequest request) throws FileNotFoundException, NoSuchAlgorithmException, CertificateException,
+			KeyStoreException, IOException {
+
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		StringBuilder builder = AppLogger.createLogStringBuilder(request, user, "vin");
+		Marker loginMarker = MarkerFactory.getMarker("vin");
+		ActivityLog log = new ActivityLog(request, user, ActivityType.VEHICLE_SELECTION);
+		System.out.println(user);
+
+		try {
+			// String vRole = userVinMapService.checkUserVinMap(user, vin);
+			// System.err.println("Count:-" + vRole);
+			/*
+			 * String vincount = userVinMapService.checkUserVinMap(user, vin);
+			 * System.err.println("Count:-" + vincount);
+			 */
+			
+			String userRole = userVinMapService.userRole(user);
+			String vincount = userVinMapService.checkUserVinMap(user, vin);
+			if (Integer.parseInt(userRole) == 1) {
+				System.err.println("User " + user + "  have access of " + "vin  " + vin);
+				// vin_cat = userVinMapService.findByVinANDUserID(user, vin);
+				String url = ividmshost + devices;
+				String mainurl = url.replace("{vin}", vin);
+				System.out.print("shadowname---" + mainurl);
+				// System.out.println(loginService.getToken());
+				RestTemplate restTemplate = getRestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+				headers.add("Authorization", "Bearer " + loginService.getToken());
+				HttpEntity<String> entity = new HttpEntity<String>(headers);
+				System.out.println("this is shadowname method excuate");
+				// UserVinMap userVinMap;
+				String response = restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+				// UserVinMap response= restTemplate.exchange(mainurl, HttpMethod.GET,
+				// userVinMap, String.class).getBody();
+				return new ResponseEntity<Object>(response, HttpStatus.OK);
+				// return new ResponseEntity<UserVinMap>(vin,HttpStatus.OK);
+			}
+
+			else {
+				System.err.println("User " + user + "  dont have access of " + "vin  " + vin);
+				return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+			}
+
+		}
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log.setData(vin + " (Failure): " + e.getMessage());
+			activityService.save(log);
+			builder.append(", Data: failure " + e);
+			AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+
+	}
+
+	//device end
+
+	@GetMapping("/prod/t/iot/dms/shadow/featureId")
+	public ResponseEntity<String> accvinvehicle(@RequestParam(value = "vin", required = true) String vin,
+			@RequestParam(value = "featureId", required = false) String featureId) throws FileNotFoundException,
+			NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		// System.out.println(user);
+		try {
+		String url = ividmshost + classicshadowname;
+		String mainurl = url.replace("{vin}", vin).replace("{featureId}", featureId);
+		System.out.print("shadownameWithFeatureID---" + mainurl);
+		// System.out.println(loginService.getToken());
+		RestTemplate restTemplate = getRestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		headers.add("Authorization", "Bearer " + loginService.getToken());
+		HttpEntity<String> entity = new HttpEntity<String>(headers);
+		System.out.println("this is featureID excuate");
+        String response=restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+		return new ResponseEntity<String>(response, HttpStatus.OK);
+		}
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			/*
+			 * e.printStackTrace(); log.setData(vin + " (Failure): " + e.getMessage());
+			 * activityService.save(log); builder.append(", Data: failure " + e);
+			 * AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			 */
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	@PutMapping("/prod/t/iot/dms/shadow/upid")
+	public ResponseEntity<String> Upid(@RequestParam(value = "vin", required = false) String vin,
+			@RequestParam(value = "featureId", required = false) String featureId,
+			@RequestBody Map<String, Object> payload) throws FileNotFoundException, NoSuchAlgorithmException,
+			CertificateException, KeyStoreException, IOException {
+
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		// System.out.println(user);
+		try {
+		String url = ividmshost + deviceIdupdate;
+		String mainurl = url.replace("{vin}", vin).replace("{featureId}", featureId);
+		System.out.println("UpdatedWithFeatureID--- " + mainurl);
+		System.out.println("payload--- " + payload);
+		RestTemplate restTemplate = getRestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		headers.add("Authorization", "Bearer " + loginService.getToken());
+		// HttpEntity<String> entity = new HttpEntity<String>(payload,headers);
+		HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(payload, headers);
+		// System.out.print("--enitity obje--"+entity);
+		System.out.println("this is Update featureID excuate ");
+		String response=restTemplate.exchange(mainurl, HttpMethod.PUT, entity, String.class).getBody();
+		return new ResponseEntity<String>(response, HttpStatus.OK);
+		}
+catch (NoVinAssignedException e) {
+
+	Map<String, Object> res = new HashMap<>();
+	res.put("No Vin Access ", false);
+	res.put("message", "No Vin Access");
+	return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+} 
+catch (HttpStatusCodeException e) {
+    //System.out.println("Received error: " + e.getResponseBodyAsString());
+    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+}
+catch (Exception e) {
+	//e.printStackTrace();			
+	//System.out.println("messge"+e);
+	// log.setData(vin + " (Failure): " + e.getMessage());
+	// activityService.save(log);
+	// builder.append(", Data: failure " + e);
+	// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+	/*
+	 * Map<String, Object> res = new HashMap<>(); res.put("Bad Request ", false);
+	 * res.put("message", "Bad Request"); return
+	 * ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	 */
+	return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+}
+	}
+
+	@GetMapping("/prod/t/iot/dms/deviceId")
+	public ResponseEntity<String> deviceIdMethod(@RequestParam(value = "deviceId", required = true) String deviceId)
+			throws FileNotFoundException, NoSuchAlgorithmException, CertificateException, KeyStoreException,
+			IOException {
+
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		// System.out.println(user);
+		try {
+			//gethuidSearchbyUser
+			String devicecount = userVinMapService.checkUserVinMapofdeviceid(user,deviceId);
+			System.err.println("Count of deviceId:-" + deviceId);
+			if (Integer.parseInt(devicecount)>=1)
+			{
+				String url = ividmshost + deviceid;
+				String mainurl = url.replace("{deviceId}", deviceId);
+				System.out.print("deviceId---" + mainurl);
+				// System.out.println(loginService.getToken());
+				RestTemplate restTemplate = getRestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+				headers.add("Authorization", "Bearer " + loginService.getToken());
+				HttpEntity<String> entity = new HttpEntity<String>(headers);
+				System.out.println("this is deviceID Data method excuate");
+		        String response=restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+				return new ResponseEntity<String>(response, HttpStatus.OK);
+		
+		}
+		else
+		{
+			//System.err.println("User " + user + "  dont have access of " + "hu_Id  " + deviceId);
+			String response="you don't have access for this HU_id";
+			return new ResponseEntity<String>(response,HttpStatus.BAD_REQUEST);
+		}
+	}
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			/*
+			 * e.printStackTrace(); log.setData(vin + " (Failure): " + e.getMessage());
+			 * activityService.save(log); builder.append(", Data: failure " + e);
+			 * AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			 */
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+
+	}
+	/*
+	 * @PostMapping("/dev/t/iot/dms/commands") public ResponseEntity<?>
+	 * CommandsMethod(@RequestParam(value = "vin", required = false) String
+	 * vin,@RequestParam(value="featureId", required = false) String
+	 * featureId,@RequestParam(value ="cmdId", required =false) String
+	 * cmdId,@RequestParam(value="campaignId",required=false) String campaignId)
+	 * throws FileNotFoundException, NoSuchAlgorithmException, CertificateException,
+	 * KeyStoreException, IOException {
+	 * 
+	 * //@RequestParam(required = false) MultiValueMap cmdData String user =
+	 * SecurityContextHolder.getContext().getAuthentication().getName();
+	 * //System.out.println(user); try {
+	 * 
+	 * //System.out.println("vin"+vin); //System.out.println("f "+featureId);
+	 * //System.out.println("cmdId "+cmdId);
+	 * //System.out.println("camp id "+campaignId); String url =
+	 * ividmshost+commands; System.out.print("commands--- " +url);
+	 * //System.out.println(loginService.getToken()); RestTemplate restTemplate
+	 * =getRestTemplate(); HttpHeaders headers = new HttpHeaders();
+	 * headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+	 * headers.add("Authorization","Bearer "+loginService.getToken());
+	 * 
+	 * //vin="MAT634003MPKM0101"; //featureId="hu"; //cmdId ="hu";
+	 * //campaignId="123";
+	 * 
+	 * String
+	 * capitalizedCmdid=cmdId.substring(0,1).toUpperCase()+cmdId.substring(1);
+	 * String cmdidmodified="forceSync"+capitalizedCmdid+"Attributes";
+	 * //System.out.println("cmdidmodified "+cmdidmodified);
+	 * campaignId="campaign"+campaignId; Map<String,Object> payload=new HashMap<>();
+	 * payload.put("vin",vin); payload.put("featureId",featureId);
+	 * payload.put("cmdId",cmdidmodified); payload.put("campaignId",campaignId);
+	 * payload.put("cmdData",new HashMap<>()); //System.out.println("cmdData "+new
+	 * HashMap<>()); System.out.println("payload "+payload);
+	 * HttpEntity<Map<String,Object>> entity = new
+	 * HttpEntity<Map<String,Object>>(payload,headers); String response
+	 * =restTemplate.exchange(url,HttpMethod.POST,entity,String.class).getBody();
+	 * return new ResponseEntity<Object>(response,HttpStatus.OK);
+	 * 
+	 * } catch(Exception e) { e.printStackTrace(); //log.setData(vin +
+	 * " (Failure): " + e.getMessage()); //activityService.save(log);
+	 * //builder.append(", Data: failure " + e); //AppLogger.info(loginMarker,
+	 * builder.toString(), this.getClass(), e); return new
+	 * ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST); } }
+	 */
+	/*
+	 * @PostMapping("/dev/t/iot/dms/commands") public ResponseEntity<?>
+	 * CommandsMethod(@RequestBody Map<String, Object> commandpayload) throws
+	 * FileNotFoundException, NoSuchAlgorithmException, CertificateException,
+	 * KeyStoreException, IOException {
+	 * 
+	 * 
+	 * String user =
+	 * SecurityContextHolder.getContext().getAuthentication().getName();
+	 * 
+	 * try {
+	 * 
+	 * 
+	 * String url = ividmshost+commands; System.out.print("commands--- " +url);
+	 * //JSONObject jo=new JSONObject(commandpayload); //String
+	 * vin=jo.getString("vin");
+	 * //System.out.println("this is commandpayload vin "+vin);
+	 * //System.out.println(loginService.getToken()); RestTemplate restTemplate
+	 * =getRestTemplate(); HttpHeaders headers = new HttpHeaders();
+	 * headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+	 * headers.add("Authorization","Bearer "+loginService.getToken());
+	 * System.out.println("commandpayload "+commandpayload);
+	 * HttpEntity<Map<String,Object>> entity = new
+	 * HttpEntity<Map<String,Object>>(commandpayload,headers); String response
+	 * =restTemplate.exchange(url,HttpMethod.POST,entity,String.class).getBody();
+	 * return new ResponseEntity<Object>(response,HttpStatus.OK);
+	 * 
+	 * } catch(Exception e) { e.printStackTrace(); //log.setData(vin +
+	 * " (Failure): " + e.getMessage()); //activityService.save(log);
+	 * //builder.append(", Data: failure " + e); //AppLogger.info(loginMarker,
+	 * builder.toString(), this.getClass(), e); return new
+	 * ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST); }
+	 * 
+	 * }
+	 */
+	@PostMapping("/prod/t/iot/dms/commands")
+	public ResponseEntity<?> CommandsMethod(@RequestBody Map<String, Object> commandpayload)
+			throws FileNotFoundException, NoSuchAlgorithmException, CertificateException, KeyStoreException,
+			IOException {
+
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		try {
+			// String vRole = userVinMapService.checkUserVinMap(user, vin);
+			// System.err.println("Count:-" + vRole);
+			JSONObject jo = new JSONObject(commandpayload);
+			String vin = jo.getString("vin");
+			//System.out.println("this is commandpayload vin "+vin);
+			String vincount = userVinMapService.checkUserVinMap(user, vin);
+			System.out.println("Count:-" + vincount);
+			if (Integer.parseInt(vincount) >= 1) {
+				System.out.println("User " + user + "  have access of " + "vin  " + vin);
+				// vin_cat = userVinMapService.findByVinANDUserID(user, vin);
+				String url = ividmshost + commands;
+				System.out.print("commands--- " + url);
+				// JSONObject jo=new JSONObject(commandpayload);
+				// String vin=jo.getString("vin");
+				// System.out.println("this is commandpayload vin "+vin);
+				// System.out.println(loginService.getToken());
+				RestTemplate restTemplate = getRestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+				headers.add("Authorization", "Bearer " + loginService.getToken());
+				//System.out.println("commandpayload " + commandpayload);
+				HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(commandpayload, headers);
+				String response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class).getBody();
+				//System.out.println("response "+response);
+				return new ResponseEntity<Object>(response, HttpStatus.OK);
+
+			} else if (Integer.parseInt(vincount) == 0) {
+				throw new NoVinAssignedException("No Vin Access");
+			} else {
+				System.err.println("User " + user + "  dont have access of " + "vin  " + vin);
+				return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+			}
+
+		} catch (NoVinAssignedException e) {
+
+			Map<String, Object> res = new HashMap<>();
+			res.put("No Vin Access ", false);
+			res.put("message", "No Vin Access");
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+		} 
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			//e.printStackTrace();			
+			//System.out.println("messge"+e);
+			// log.setData(vin + " (Failure): " + e.getMessage());
+			// activityService.save(log);
+			// builder.append(", Data: failure " + e);
+			// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			/*
+			 * Map<String, Object> res = new HashMap<>(); res.put("Bad Request ", false);
+			 * res.put("message", "Bad Request"); return
+			 * ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+			 */
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+
+	}
+
+	// commnadtypes
+	@GetMapping("/prod/t/iot/dms/commandstid")
+	public ResponseEntity<?> commandstid(@RequestParam(value = "vin", required = true) String vin,
+			@RequestParam(value = "cmdId", required = false) String cmdId) throws FileNotFoundException,
+			NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		System.out.println(user);
+		try {
+
+			String url = ividmshost + commandstid;
+			// String
+			// capitalizedCmdid=cmdId.substring(0,1).toUpperCase()+cmdId.substring(1);
+			// String cmdidmodified="forceSync"+capitalizedCmdid+"Attributes";
+			String mainurl = url.replace("{vin}", vin).replace("{cmdId}", cmdId);
+			System.out.print("Commandswith_commandtype---" + mainurl);
+			// System.out.println(loginService.getToken());
+			RestTemplate restTemplate = getRestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			headers.add("Authorization", "Bearer " + loginService.getToken());
+			HttpEntity<String> entity = new HttpEntity<String>(headers);
+			// System.out.println("this is featureID excuate");
+			String response = restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<Object>(response, HttpStatus.OK);
+		}
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			// log.setData(vin + " (Failure): " + e.getMessage());
+			// activityService.save(log);
+			// builder.append(", Data: failure " + e);
+			// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+		}
+	}
+
+	// commandtid
+	@GetMapping("/prod/t/iot/dms/commandtid")
+	public ResponseEntity<?> commandtid(@RequestParam(value = "vin", required = true) String vin,
+			@RequestParam(value = "tid", required = false) String tid) throws FileNotFoundException,
+			NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		// System.out.println(user);
+		try {
+
+			String url = ividmshost + commandtid;
+			String mainurl = url.replace("{vin}", vin).replace("{tid}", tid);
+			System.out.print("Commandswith_tid---" + mainurl);
+			// System.out.println(loginService.getToken());
+			RestTemplate restTemplate = getRestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			headers.add("Authorization", "Bearer " + loginService.getToken());
+			HttpEntity<String> entity = new HttpEntity<String>(headers);
+			// System.out.println("this is featureID excuate");
+			String response = restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<Object>(response, HttpStatus.OK);
+		} 
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			//e.printStackTrace();
+			// log.setData(vin + " (Failure): " + e.getMessage());
+			// activityService.save(log);
+			// builder.append(", Data: failure " + e);
+			// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+		}
+	}
+
+//allactivedevice-get for all device
+	@GetMapping("/prod/t/iot/dms/devices/counts")
+	public ResponseEntity<?> GetAllDevice() throws FileNotFoundException, NoSuchAlgorithmException,
+			CertificateException, KeyStoreException, IOException {
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		// System.out.println(user);
+		try {
+
+			String url = ividmshost + allactivedevice;
+			System.out.print("GetAlldevices---" + url);
+			// System.out.println(loginService.getToken());
+			RestTemplate restTemplate = getRestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			headers.add("Authorization", "Bearer " + loginService.getToken());
+			HttpEntity<String> entity = new HttpEntity<String>(headers);
+			// System.out.println("this is featureID excuate");
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<Object>(response, HttpStatus.OK);
+		} 
+		catch (HttpStatusCodeException e) {
+		    //System.out.println("Received error: " + e.getResponseBodyAsString());
+		    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			// log.setData(vin + " (Failure): " + e.getMessage());
+			// activityService.save(log);
+			// builder.append(", Data: failure " + e);
+			// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+		}
+	}
+	//allINactivedevice-get for all device
+		@GetMapping("/prod/t/iot/dms/devices/inactivecounts")
+		public ResponseEntity<?> GetAllINactiveDevice() throws FileNotFoundException, NoSuchAlgorithmException,
+				CertificateException, KeyStoreException, IOException {
+			String user = SecurityContextHolder.getContext().getAuthentication().getName();
+			// System.out.println(user);
+			try {
+
+				String url = ividmshost +allInactivedevice ;
+				System.out.print("GetAllInactivedevices---" + url);
+				// System.out.println(loginService.getToken());
+				RestTemplate restTemplate = getRestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+				headers.add("Authorization", "Bearer " + loginService.getToken());
+				HttpEntity<String> entity = new HttpEntity<String>(headers);
+				// System.out.println("this is featureID excuate");
+				String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+				return new ResponseEntity<Object>(response, HttpStatus.OK);
+			}
+			catch (HttpStatusCodeException e) {
+			    //System.out.println("Received error: " + e.getResponseBodyAsString());
+			    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				// log.setData(vin + " (Failure): " + e.getMessage());
+				// activityService.save(log);
+				// builder.append(", Data: failure " + e);
+				// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+				return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+			}
+		}
+		
+		/***message list start*/
+		//@RequestParam(value="featureId", required = false) String featureId,
+		@GetMapping("/prod/t/iot/dms/messages")
+		public ResponseEntity<String> msgType(@RequestParam(value = "vin", required = true) String vin,
+				@RequestParam(value="messagetype", required = false) String messagetype) throws FileNotFoundException,
+				NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+
+			String user = SecurityContextHolder.getContext().getAuthentication().getName();
+			//System.out.println("this mssgtype"+" "+vin + " "+featureId +" "+ messagetype);
+			try {
+			System.out.println("this mssgtype"+" "+vin + " "+ messagetype);
+			String url = ividmshost+messagetypeNew;
+			System.err.println("jj"+url);
+			String mainurl = url.replace("{vin}",vin).replace("{msgId}",messagetype);
+			//String mainurl = url.replace("{vin}",vin).replace("{featureId}",featureId).replace("{msgId}",messagetype);
+			System.err.println("anand "+mainurl);
+			System.out.print("MessagetType---"+mainurl);
+			// System.out.println(loginService.getToken());
+			RestTemplate restTemplate = getRestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			headers.add("Authorization", "Bearer " + loginService.getToken());
+			HttpEntity<String> entity = new HttpEntity<String>(headers);
+			System.out.println("this is featureID excuate");
+            String response=restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response,HttpStatus.OK);
+			}
+			catch (HttpStatusCodeException e) {
+			    //System.out.println("Received error: " + e.getResponseBodyAsString());
+			    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+			}
+			catch (Exception e) {
+				/*
+				 * e.printStackTrace(); log.setData(vin + " (Failure): " + e.getMessage());
+				 * activityService.save(log); builder.append(", Data: failure " + e);
+				 * AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+				 */
+				return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			}
+		}
+		/**message list end**/
+		
+		
+		//totalcount-get for all device
+				@GetMapping("/prod/t/iot/dms/devices/totalcounts")
+				public ResponseEntity<?> GettotalCount() throws FileNotFoundException, NoSuchAlgorithmException,
+						CertificateException, KeyStoreException, IOException {
+					String user = SecurityContextHolder.getContext().getAuthentication().getName();
+					// System.out.println(user);
+					try {
+
+						String url = ividmshost +totalcount;
+						System.out.print("GetTotalcountdevices---" + url);
+						// System.out.println(loginService.getToken());
+						RestTemplate restTemplate = getRestTemplate();
+						HttpHeaders headers = new HttpHeaders();
+						headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+						headers.add("Authorization", "Bearer " + loginService.getToken());
+						HttpEntity<String> entity = new HttpEntity<String>(headers);
+						// System.out.println("this is featureID excuate");
+						String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+						return new ResponseEntity<Object>(response, HttpStatus.OK);
+					} catch (Exception e) {
+						e.printStackTrace();
+						// log.setData(vin + " (Failure): " + e.getMessage());
+						// activityService.save(log);
+						// builder.append(", Data: failure " + e);
+						// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+						return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+					}
+				}
+				//swv
+				@GetMapping("/prod/t/iot/dms/swv")
+				public ResponseEntity<?> swv(@RequestParam(value = "swver", required = true) String swver) throws FileNotFoundException,
+						NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+					String user = SecurityContextHolder.getContext().getAuthentication().getName();
+					System.out.println(user);
+					try {
+
+						String url = ividmshost+swv;
+						String mainurl = url.replace("{swver}", swver);
+						System.out.print("swver---" + mainurl);						
+						RestTemplate restTemplate = getRestTemplate();
+						HttpHeaders headers = new HttpHeaders();
+						headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+						headers.add("Authorization", "Bearer " + loginService.getToken());
+						HttpEntity<String> entity = new HttpEntity<String>(headers);						
+						String response = restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+						return new ResponseEntity<Object>(response, HttpStatus.OK);
+					} 
+					catch (HttpStatusCodeException e) {
+					    //System.out.println("Received error: " + e.getResponseBodyAsString());
+					    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+					}
+					catch (Exception e) {
+						e.printStackTrace();					
+						return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+					}
+				}
+				//vehicleVc
+				@GetMapping("/prod/t/iot/dms/vehiclevc")
+				public ResponseEntity<?> VehicleVC(@RequestParam(value = "vehvc", required = true) String vehvc) throws FileNotFoundException,
+						NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+					String user = SecurityContextHolder.getContext().getAuthentication().getName();
+					System.out.println(user);
+					try {
+
+						String url = ividmshost+vehicleVc;
+						String mainurl = url.replace("{vehvc}", vehvc);
+						System.out.print("vehvc---" + mainurl);						
+						RestTemplate restTemplate = getRestTemplate();
+						HttpHeaders headers = new HttpHeaders();
+						headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+						headers.add("Authorization", "Bearer " + loginService.getToken());
+						HttpEntity<String> entity = new HttpEntity<String>(headers);						
+						String response = restTemplate.exchange(mainurl, HttpMethod.GET, entity, String.class).getBody();
+						return new ResponseEntity<Object>(response, HttpStatus.OK);
+					}
+					catch (HttpStatusCodeException e) {
+					    //System.out.println("Received error: " + e.getResponseBodyAsString());
+					    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+					}
+					catch (Exception e) {
+						e.printStackTrace();					
+						return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+					}
+				}
+
+				@GetMapping("/prod/t/iot/dms/readFile")
+			    public ResponseEntity<Object> readFile() {
+			        // Define the file path on server
+					//String filePath = "D:/VishalK/c_data.json";
+					
+					   // Define the file path on local
+					 String filePath = "D:/VishalK/c_data.json";
+					 //System.out.println("this first line"+filePath);
+					 JSONObject jsonObject=null ;
+			        try {
+			            // Read file content
+			            Path file = Paths.get(filePath);
+			            byte[] fileContent = Files.readAllBytes(file);
+			            String content = new String(fileContent);
+			            //System.out.println("json object print"+content);
+			            try {
+			            	jsonObject=new JSONObject(content);
+			            	//System.out.println("json object print");
+			           }catch (JSONException err){
+			                System.out.println("Error"+err.toString());
+			           }
+			            return new ResponseEntity<Object>(jsonObject.toString(), HttpStatus.OK);
+			        } catch (IOException e) {
+			            // Log or handle the exception
+			            return ResponseEntity
+			                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+			                    .body("Error reading the file: " + e.getMessage());
+			        }
+			    }
+
+				
+//campaign initate start
+				@PostMapping("/prod/t/iot/dms/initate")
+				public ResponseEntity<?> campaignMethod(@RequestBody Map<String, Object> initatepayload)
+						throws FileNotFoundException, NoSuchAlgorithmException, CertificateException, KeyStoreException,
+						IOException {
+
+					String user = SecurityContextHolder.getContext().getAuthentication().getName();
+					try {
+								
+							String url = ividmshost + initiatecampaign;
+							System.out.print("commands--- " + url);
+							// JSONObject jo=new JSONObject(commandpayload);
+							// String vin=jo.getString("vin");
+							// System.out.println("this is commandpayload vin "+vin);
+							// System.out.println(loginService.getToken());
+							RestTemplate restTemplate = getRestTemplate();
+							HttpHeaders headers = new HttpHeaders();
+							headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+							headers.add("Authorization", "Bearer " + loginService.getToken());
+							System.out.println("initiatecampaign payload " + initatepayload);
+							HttpEntity<Map<String, Object>> entity = new HttpEntity<Map<String, Object>>(initatepayload, headers);
+							String response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class).getBody();
+							//System.out.println("response "+response);
+							return new ResponseEntity<Object>(response, HttpStatus.OK);
+
+						
+
+					} catch (NoVinAssignedException e) {
+
+						Map<String, Object> res = new HashMap<>();
+						res.put("No Vin Access ", false);
+						res.put("message", "No Vin Access");
+						return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+
+					} 
+					catch (HttpStatusCodeException e) {
+					    //System.out.println("Received error: " + e.getResponseBodyAsString());
+					    return new ResponseEntity<String>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+					}
+					catch (Exception e) {
+						//e.printStackTrace();			
+						//System.out.println("messge"+e);
+						// log.setData(vin + " (Failure): " + e.getMessage());
+						// activityService.save(log);
+						// builder.append(", Data: failure " + e);
+						// AppLogger.info(loginMarker, builder.toString(), this.getClass(), e);
+						/*
+						 * Map<String, Object> res = new HashMap<>(); res.put("Bad Request ", false);
+						 * res.put("message", "Bad Request"); return
+						 * ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+						 */
+						return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+					}
+				}
+//campaign initate end
+				
+	public RestTemplate getSecuredRestTemplate(String keystorePath, String password) throws FileNotFoundException,
+			IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		KeyStore ks = null;
+		SSLContext ctx = null;
+		char[] pass = password.toCharArray();
+
+		ks = KeyStore.getInstance("JKS");
+
+		ks.load(new FileInputStream(keystorePath), pass);
+
+		try {
+
+			ctx = SSLContextBuilder.create().loadKeyMaterial(ks, pass).loadTrustMaterial(ks, TrustAllStrategy.INSTANCE)
+					.build();
+		} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException("Error in creating SSLContext", e1);
+		}
+
+		HttpClient client = HttpClients.custom()
+				.setSSLSocketFactory(new SSLConnectionSocketFactory(ctx, new HostnameVerifier() {
+
+					@Override
+					public boolean verify(String arg0, SSLSession arg1) {
+						return true;
+					}
+				})).build();
+		return new RestTemplate(new HttpComponentsClientHttpRequestFactory(client));
+
+	}
+
+	public RestTemplate getRestTemplate() throws FileNotFoundException, IOException, NoSuchAlgorithmException,
+			CertificateException, KeyStoreException {
+		if (ividmshost.contains("https")) {
+
+			return getSecuredRestTemplate(keystorePath, keystorePass);
+		} else {
+			return new RestTemplate();
+		}
+
+	}
+
+}
