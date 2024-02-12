@@ -1,0 +1,243 @@
+@RequestMapping(value = "/prod/complete", method = RequestMethod.GET)
+	@CrossOrigin(origins = "*")
+	public List<String> autoName(@RequestParam(value = "vinSearch", required = false, defaultValue = "") String vinSearch) {
+		String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+       
+		 String userRole = userVinMapService.userRole(userId);	
+		 List<String> vinSearchbyUser;
+		if(Integer.parseInt(userRole) == 1) {
+			  vinSearchbyUser = userVinMapService.getVinSearchbyUserAdmin(vinSearch);
+		}else {
+			  vinSearchbyUser = userVinMapService.getVinSearchbyUser(vinSearch,userId);
+		}
+	
+	  //System.out.println(vinSearchbyUser);
+		return vinSearchbyUser;
+	}
+// css code need to add
+
+//js file code
+var vinSearchUrl = host + "/complete";
+var HUIDSearchUrl = host + "/completehuid";
+var vinSearchUrl1 = "https://localhost:8400/tmlcvp/vin/category/auto";
+
+$(function() {
+
+	$(".vin_read").autocomplete({
+
+		source: function(request, response) {
+
+			$.ajax({
+
+				url: vinSearchUrl,
+
+				type: "GET",
+
+				headers: { "Content-Type": "application/json", "Authorization": token },
+
+				data: { vinSearch: request.term },
+
+				success: function(data) {
+
+					response($.map(data, function(item) {
+
+						return {
+
+							label: item,
+
+							value: item
+
+						};
+
+					}));
+
+				}
+
+			});
+
+		}, minLength: 4,
+
+		max:10,
+
+		scroll: true,
+		appendTo: "#appendToHere"
+
+		/*select: function (event, ui) {
+
+			  $("#name").val(ui.item.label);
+
+			  $("#value").val(ui.item.value);
+
+			  return false;
+
+		}*/
+ 
+	});
+
+});
+
+//for command
+$(function() {
+
+	$(".commandresp").autocomplete({
+
+		source: function(request, response) {
+
+			$.ajax({
+
+				url: vinSearchUrl,
+
+				type: "GET",
+
+				headers: { "Content-Type": "application/json", "Authorization": token },
+
+				data: { vinSearch: request.term },
+
+				success: function(data) {
+
+					response($.map(data, function(item) {
+
+						return {
+
+							label: item,
+
+							value: item
+
+						};
+
+					}));
+
+				}
+
+			});
+
+		}, minLength: 4,
+
+		max:10,
+
+		scroll: true,
+		appendTo: "#appendToHereCOMMANDRES"
+
+		/*select: function (event, ui) {
+
+			  $("#name").val(ui.item.label);
+
+			  $("#value").val(ui.item.value);
+
+			  return false;
+
+		}*/
+ 
+	});
+
+});
+//for messg
+$(function() {
+
+	$(".msgclass").autocomplete({
+
+		source: function(request, response) {
+
+			$.ajax({
+
+				url: vinSearchUrl,
+
+				type: "GET",
+
+				headers: { "Content-Type": "application/json", "Authorization": token },
+
+				data: { vinSearch: request.term },
+
+				success: function(data) {
+
+					response($.map(data, function(item) {
+
+						return {
+
+							label: item,
+
+							value: item
+
+						};
+
+					}));
+
+				}
+
+			});
+
+		}, minLength: 4,
+
+		max:10,
+
+		scroll: true,
+		appendTo: "#appendToHeremsg"
+
+		/*select: function (event, ui) {
+
+			  $("#name").val(ui.item.label);
+
+			  $("#value").val(ui.item.value);
+
+			  return false;
+
+		}*/
+ 
+	});
+
+});
+//for huid
+$(function() {
+
+	$(".huid_read").autocomplete({
+
+		source: function(request, response) {
+
+			$.ajax({
+
+				url: HUIDSearchUrl,
+
+				type: "GET",
+
+				headers: { "Content-Type": "application/json", "Authorization": token },
+
+				data: {huidSearch: request.term },
+
+				success: function(data) {
+
+					response($.map(data, function(item) {
+
+						return {
+
+							label: item,
+
+							value: item
+
+						};
+
+					}));
+
+				}
+
+			});
+
+		}, minLength: 4,
+
+		max:10,
+
+		scroll: true,
+		appendTo: "#appendToHerehuid"
+
+		/*select: function (event, ui) {
+
+			  $("#name").val(ui.item.label);
+
+			  $("#value").val(ui.item.value);
+
+			  return false;
+
+		}*/
+ 
+	});
+
+});
