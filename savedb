@@ -1,0 +1,55 @@
+//controller
+@GetMapping("/get/databy/swversion/{swversion}")
+	public LinkedHashSet<EntityMapPvEv> getVsohListBySwversionPvEvVins(@PathVariable String swversion,
+			HttpServletRequest request) {
+		LinkedHashSet<EntityMapPvEv> dataBySwversionPvEv = vsohPvEvViewService.getDataBySwversionPvEv(swversion);
+		String user = SecurityContextHolder.getContext().getAuthentication().getName();
+		StringBuilder builder = AppLogger.createLogStringBuilder(request, user, "VSOH-softwareversion");
+		ActivityLog log = new ActivityLog(request, user, ActivityType.softwareversion);
+		log.setData(swversion);
+		// System.out.println("swversion");
+		activityService.save(log);
+
+		//System.out.println("count vsho " + vsohPvEvViewService.getcountofVsoh(swversion));
+		//System.out.println("count vsho_ev " + vsohPvEvViewService.getcountofVSOH_EV(swversion));
+		//System.out.println("total count "
+			//	+ (vsohPvEvViewService.getcountofVsoh(swversion) + vsohPvEvViewService.getcountofVSOH_EV(swversion)));
+		int getcountofVsoh = vsohPvEvViewService.getcountofVsoh(swversion);
+		int getcountofVSOH_EV = vsohPvEvViewService.getcountofVSOH_EV(swversion);
+		int totalSwVersionCount = getcountofVsoh+getcountofVSOH_EV;
+		if(totalSwVersionCount>10000) {
+			//method save to swVersion to table DownloadCSVFileSwVersion
+			vsohPvEvViewService.saveSwVersionExportCsvData(swversion);
+		}
+		return dataBySwversionPvEv;
+	}
+
+
+
+
+//service code
+  public void saveSwVersionExportCsvData(String swversion) {
+		// TODO Auto-generated method stub
+		Date date = new Date();
+		SimpleDateFormat DateFor = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
+		String stringDate = DateFor.format(date);
+		String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+		String status = "PENDING";
+		String input = swversion;
+		String downloadLink = "";
+		String emailStatus = "PENDING";
+		String requestDateTime = stringDate;
+        
+		vsohPvEvViewRepo.saveSwVersinToCSVExport(userId,status,input,downloadLink,requestDateTime,emailStatus);
+	    System.out.println("swv save");
+	}
+//repo code
+        @Transactional 
+	@Modifying
+	@Query(value="insert into DownloadCSVFileSwVersion (userId,status,input,downloadLink,requestDateTime,emailStatus) VALUES ( :userId, :status, :input, :downloadLink, :requestDateTime, :emailStatus)", nativeQuery=true)
+	 void saveSwVersinToCSVExport(@Param("userId") String commitId,
+	                          @Param("status") String activityId,
+	                          @Param("input") String input,
+	                          @Param("downloadLink") String downloadLink,
+	                          @Param("requestDateTime") String requestDateTime,    
+	                          @Param("emailStatus") String emailStatus);
