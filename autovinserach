@@ -1,3 +1,13 @@
+//db
+@Modifying
+    @Query(value = "select e.deviceId from VinCategory e where e.deviceId LIKE %:term%",nativeQuery = true)
+	public List<String> gethuidSearchbyUserAdmin(String term);
+
+@Modifying
+    @Query(value = "select e.deviceId from UserVinMap e where e.userId=:useId and e.deviceId LIKE %:term%",nativeQuery = true)
+	public List<String> gethuidSearchbyUser(String term, String useId);
+
+
 @RequestMapping(value = "/prod/complete", method = RequestMethod.GET)
 	@CrossOrigin(origins = "*")
 	public List<String> autoName(@RequestParam(value = "vinSearch", required = false, defaultValue = "") String vinSearch) {
