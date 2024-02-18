@@ -1,0 +1,6 @@
+1. click rigth side new enviroment and name it and create variable "access_token"
+2.go to token api in Test  addd below lines
+     const response=pm.response.json();
+     pm.environment.set("access_token",response.access_token);  //access_token token is token api response which is collect in "access_token" variable.
+3. in respected api to required above token.
+    -go to authentication breaber token {{access_token}}.
