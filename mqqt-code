@@ -1,0 +1,95 @@
+//link for study springboot mqqt connection.
+https://www.baeldung.com/java-mqtt-client
+
+hu id--same data ana chahiye..in 
+shadow--desire and reported..
+
+
+desire or reported and version and timestamp.vechicle,
+desired..all parameter we can change or update..
+6/9--
+humjo kar 6 shadow..
+
+$aws/things/HU_DEVTEST0002/shadow/name/vehicle/update--with parameter
+     /things/{HUid}/shadow/name/{featureId}/update--dynamic parameter
+
+{
+    "state": {
+        "desired": {
+            "syncAttributes": {
+               "syncOnChange": "ON",
+                "periodicSync": "OFF",
+                "syncPeriodicity": 25
+            }
+        }
+    }
+}
+def main():
+  print("**************shadow Update*******************)
+  parser=argparse.ArgumentParser(description="update the aws iot cre shadow state")
+  parser.add_argument('topic',type=str,help="the MQTT topic to publish the update")
+  parser.add_argument('payload',type=str,help="the payload to update shadow state in json format")
+  args= parser.parse-args()
+  topic_parts = args.topic.split('/')
+  if len(topic_parts) <=5:
+      print("updating classic shadow")
+      classic_shadow_update(args.topic,topic_parts,args.payload)
+      return True
+  elif len(topic_parts) <=7:
+      print("updating classic shadow")
+      name_shadow_update(args.topic,topic_parts,args.payload)
+      return True
+  if len(topic_parts) <=8:
+      print("updating classic shadow")
+      update_device_shadow_update(args.topic,topic_parts,args.payload)
+      return True
+  else:
+      print("Topic is invalid")
+
+----springbootcode---
+
+
+import java.io.IOException;
+
+public class PythonScriptRunner {
+
+    public void executePythonScript(String huid,string featurId,String payload) {
+        try {
+
+           //String mqttTopic = "/things/HU_DEVTEST0002/shadow/name/vehicle/update";
+            String mqttTopic = "things/huid/shadow/name/featureId/update";
+            String topic = mqttTopic.replace("huid", huid).replace("featureId",featurId);
+            System.out.println("fullmqttTopic"+topic);
+         
+            // Replace with the path to your modified Python script
+            String pythonScriptPath = "/path/to/your/shadow_update.py";
+
+            // Create a process builder for Python
+            ProcessBuilder processBuilder = new ProcessBuilder("python3", pythonScriptPath, topic,payload);
+
+            // Start the process
+            Process process = processBuilder.start();
+
+            // Wait for the process to complete
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0) {
+                System.out.println("Python script executed successfully.");
+            } else {
+                System.err.println("Error executing Python script. Exit code: " + exitCode);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Your Spring Boot application code here...
+}
+ // Call the Python script with the desired topic and payload
+        String mqttTopic = "things/HU_DEVTEST0002/shadow/name/vehicle/update";
+        String payloadJson = "{\"state\":{\"desired\":{\"syncAttributes\":{\"syncOnChange\":\"ON\",\"periodicSync\":\"OFF\",\"syncPeriodicity\":25}}}}";
+//calling the method from class
+        PythonScriptRunner.executePythonScript(mqttTopic, payloadJson);
+
+
+      
