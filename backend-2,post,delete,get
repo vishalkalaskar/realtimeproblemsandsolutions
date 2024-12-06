@@ -1,0 +1,232 @@
+package com.map.service.controller;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Collections;
+import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+//import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+//import com.map.service.user.vin.UserVinMapService
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.map.service.apimodelclass.FileDetailResponse;
+import com.map.service.lexi.api.utility.TokenService;
+
+
+@RestController
+@CrossOrigin("*")
+public class FileUploadController {
+
+    @Value("${lexi.api.host}")
+    private String lexihost;
+
+    @Value("${cert.keystore.path}")
+    private String keystorePath;
+
+    @Value("${cert.keystore.pass}")
+    private String keystorePass;
+
+    @Value("${lexi.api.filesingle}")
+    private String filesingle;
+    
+    @Value("${lexi.api.singletype}")
+    private String singletype;
+     
+    @Value("${lexi.api.filedelete}")
+    private String filedelete;
+
+    @Autowired
+    private TokenService tokenService;
+
+    public RestTemplate getSecuredRestTemplate(String keystorePath, String password) throws FileNotFoundException,
+            IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+    	KeyStore ks = null;
+		SSLContext ctx = null;
+		char[] pass = password.toCharArray();
+
+		ks = KeyStore.getInstance("JKS");
+
+		ks.load(new FileInputStream(keystorePath), pass);
+
+		try {
+
+			ctx = SSLContextBuilder.create().loadKeyMaterial(ks, pass).loadTrustMaterial(ks, TrustAllStrategy.INSTANCE)
+					.build();
+		} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException("Error in creating SSLContext", e1);
+		}
+
+        HttpClient client = HttpClients.custom()
+                .setSSLSocketFactory(new SSLConnectionSocketFactory(ctx, new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String arg0, SSLSession arg1) {
+                        return true;
+                    }
+                })).build();
+        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(client));
+    }
+
+    public RestTemplate getRestTemplate() throws FileNotFoundException, IOException, NoSuchAlgorithmException,
+            CertificateException, KeyStoreException {
+        if (lexihost.contains("https")) {
+            return getSecuredRestTemplate(keystorePath, keystorePass);
+        } else {
+            return new RestTemplate();
+        }
+    }
+    //version must change for file upload
+    @PostMapping("/lexi/t/iot/cpi/signals/files")
+    public ResponseEntity<String> singlefile(@RequestParam("files") MultipartFile files,
+                                             @RequestParam Map<String, String> fileDetails) throws IOException,
+            NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+        //String user = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            String urlfile = lexihost + filesingle;
+            System.out.println("lexi file single--- " + urlfile);
+            System.out.println("payload--- " + fileDetails);
+
+            // Convert the MultipartFile to a resource
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("files", new ByteArrayResource(files.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return files.getOriginalFilename();
+                }
+            });
+
+            // Add other payload parameters
+            for (Map.Entry<String, String> entry : fileDetails.entrySet()) {
+                body.add(entry.getKey(), entry.getValue());
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+            HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
+            RestTemplate restTemplate = getRestTemplate();
+            String response = restTemplate.exchange(urlfile, HttpMethod.POST, entity, String.class).getBody();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (HttpStatusCodeException e) {
+            return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+   
+    @GetMapping("/lexi/t/iot/cpi/signals/files/singletype")
+    public ResponseEntity<FileDetailResponse> getSingleType(@RequestParam("userDeviceType") String userDeviceType,
+                                                            @RequestParam("signalType") String signalType,
+                                                            @RequestParam("fileType") String fileType) throws IOException,
+            NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+        try {
+            String urlsingle = lexihost + singletype.replace("{userDeviceType}", userDeviceType)
+                                               .replace("{signalType}", signalType)
+                                               .replace("{fileType}", fileType);
+            System.out.println("lexi single type URL--- " + urlsingle);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            RestTemplate restTemplate = getRestTemplate();
+
+            // Capture the raw response
+            String rawResponse = restTemplate.exchange(urlsingle, HttpMethod.GET, entity, String.class).getBody();
+            System.out.println("Raw response from external API: " + rawResponse);
+
+            // Now try to deserialize the response into FileDetailResponse
+            ObjectMapper objectMapper = new ObjectMapper(); // Ensure you have this import
+            FileDetailResponse fileDetailResponse = objectMapper.readValue(rawResponse, FileDetailResponse.class);
+
+            return new ResponseEntity<>(fileDetailResponse, HttpStatus.OK);
+        } catch (HttpStatusCodeException e) {
+            // Handle specific HTTP error responses
+            FileDetailResponse errorResponse = new FileDetailResponse();
+            errorResponse.setFileDetails(Collections.emptyList());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            // Handle other exceptions
+            FileDetailResponse errorResponse = new FileDetailResponse();
+            errorResponse.setFileDetails(Collections.emptyList());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @DeleteMapping("/lexi/t/iot/cpi/signals/files/delete")
+    public ResponseEntity<?> fileDelete(
+            @RequestParam("userDeviceType") String userDeviceType,
+            @RequestParam("signalType") String signalType,
+            @RequestParam("fileType") String fileType,
+            @RequestParam("version") String version) 
+            throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+        try {
+            // Construct the external URL
+            String urlsingle = lexihost + filedelete.replace("{userDeviceType}", userDeviceType)
+                                                   .replace("{signalType}", signalType)
+                                                   .replace("{fileType}", fileType)
+                                                   .replace("{version}", version);
+            System.out.println("Lexi file type URL--- " + urlsingle);
+
+            // Set headers with authorization
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(urlsingle, HttpMethod.DELETE, entity, String.class).getBody();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (HttpStatusCodeException e) {
+            return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+
+	
+}
