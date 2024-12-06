@@ -1,0 +1,195 @@
+package com.map.service.controller;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+
+import com.map.service.lexi.api.utility.TokenService;
+
+
+@RestController
+@CrossOrigin("*")
+public class InsightsController {
+
+    @Value("${lexi.api.host}")
+    private String lexihost;
+   
+    @Value("${cert.keystore.path}")
+    private String keystorePath;
+
+    @Value("${cert.keystore.pass}")
+    private String keystorePass;
+    
+    @Value("${lexi.api.insigthsdevicetype}")
+    private String insigthsdevicetype;
+    
+    @Value("${lexi.api.insigthsedit}")
+    private String insigthsedit;
+    
+    @Value("${lexi.api.insigthsdelete}")
+    private String insigthsdelete;
+    
+    @Autowired
+    private TokenService tokenService;
+
+    public RestTemplate getSecuredRestTemplate(String keystorePath, String password) throws FileNotFoundException,
+            IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+    	KeyStore ks = null;
+		SSLContext ctx = null;
+		char[] pass = password.toCharArray();
+
+		ks = KeyStore.getInstance("JKS");
+
+		ks.load(new FileInputStream(keystorePath), pass);
+
+		try {
+
+			ctx = SSLContextBuilder.create().loadKeyMaterial(ks, pass).loadTrustMaterial(ks, TrustAllStrategy.INSTANCE)
+					.build();
+		} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException("Error in creating SSLContext", e1);
+		}
+
+        HttpClient client = HttpClients.custom()
+                .setSSLSocketFactory(new SSLConnectionSocketFactory(ctx, new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String arg0, SSLSession arg1) {
+                        return true;
+                    }
+                })).build();
+        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(client));
+    }
+
+    public RestTemplate getRestTemplate() throws FileNotFoundException, IOException, NoSuchAlgorithmException,
+            CertificateException, KeyStoreException {
+        if (lexihost.contains("https")) {
+            return getSecuredRestTemplate(keystorePath, keystorePass);
+        } else {
+            return new RestTemplate();
+        }
+    }
+
+   //https://localhost:2800/lexi/insights/cards/?device_type=CVACCLD
+    @GetMapping("/lexi/insights/cards")
+	public ResponseEntity<String> getcards(@RequestParam("device_type") String device_type)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+		
+		try {
+			String url = insigthsdevicetype.replace("<device_type>", device_type);;
+			System.out.println("lexi count type URL--- " + url);
+
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+	
+     //update card put(id)
+    //https://localhost:2800/lexi/insights/cards/edit/?id=6
+    @PutMapping("/lexi/insights/cards/edit")
+    public ResponseEntity<String> Editcards(
+            @RequestParam("id") String id,
+            @RequestBody Map<String, Object> requestBody) throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+        try {
+            String url = insigthsedit.replace("<id>", id);
+            System.out.println("URL for edit: " + url);
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+            // Create the entity with the request body
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            RestTemplate restTemplate = getRestTemplate();
+
+            // Send the PUT request to the external service
+            String response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class).getBody();
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (HttpStatusCodeException e) {
+            return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+   //delete card on id   
+    //https://localhost:2800/lexi/insights/cards/delete/?id=6
+    @DeleteMapping("/lexi/insights/cards/delete")
+   	public ResponseEntity<String> Deletecards(@RequestParam("id") String id)
+   			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+   		
+   		try {
+   			String url = insigthsdelete.replace("<id>", id);;
+   			System.out.println("lexi delete id type URL--- " + url);
+
+
+   			HttpHeaders headers = new HttpHeaders();
+   			headers.setContentType(MediaType.APPLICATION_JSON);
+   			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+   			HttpEntity<String> entity = new HttpEntity<>(headers);
+   			RestTemplate restTemplate = getRestTemplate();
+   			String response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class).getBody();
+   			return new ResponseEntity<String>(response, HttpStatus.OK);
+   		} catch (HttpStatusCodeException e) {
+   			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+   		} catch (Exception e) {
+   			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+   		}
+   		
+   	}
+    
+	
+}
