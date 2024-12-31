@@ -1,17 +1,17 @@
-backend apis'
+//twinexpoler controller
 package com.map.service.controller;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.Collections;
-import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -24,7 +24,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -32,27 +31,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-//import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-//import com.map.service.user.vin.UserVinMapService
-import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.map.service.apimodelclass.FileDetailResponse;
 import com.map.service.lexi.api.utility.TokenService;
 
 
 @RestController
 @CrossOrigin("*")
-public class LexiController {
+public class TwinExplorer {
 
     @Value("${lexi.api.host}")
     private String lexihost;
@@ -62,32 +53,58 @@ public class LexiController {
 
     @Value("${cert.keystore.pass}")
     private String keystorePass;
-
-    @Value("${lexi.api.filesingle}")
-    private String filesingle;
-    
-    @Value("${lexi.api.singletype}")
-    private String singletype;
     
     @Value("${lexi.api.count}")
     private String count;
+    
+    @Value("${lexi.api.policycountsize}")
+    private String policycountsize;
     
     @Value("${lexi.api.countsize}")
     private String countsize;
     
     @Value("${lexi.api.policy}")
     private String policy;
+   
+    @Value("${lexi.api.whoami}")
+    private String whoami;
+    
+    @Value("${lexi.api.policyuser}")
+    private String policyuser;
     
     @Value("${lexi.api.policyid}")
     private String policyId;
     
+    @Value("${lexi.api.policyidsubjects}")
+    private String policyidsubjects;
+    
+    @Value("${lexi.api.policesearch}")
+    private String policesearch;
+    
     @Value("${lexi.api.twinid}")
     private String twinId;
     
-	/*
-	 * @Value("${lexi.api.twinthings}") private String twinthings;
-	 */
-
+   
+    @Value("${lexi.api.fildsdandid}")
+    private String fildsdandid;
+    
+    @Value("${lexi.api.twinthings}") 
+	private String twinthings;
+    
+    @Value("${lexi.api.twinselectionvalue}") 
+	private String twinselectionvalue;
+    
+    @Value("${lexi.api.twinselectionvaluesize}") 
+   	private String twinselectionvaluesize;
+    
+    @Value("${lexi.api.twinsearch}") 
+   	private String twinIdsearch;
+	  
+    @Value("${lexi.api.featuresugnalset}") 
+	private String featuresugnalset;
+    
+    @Value("${lexi.api.filed3}") 
+	private String filed3;
     @Autowired
     private TokenService tokenService;
 
@@ -129,87 +146,7 @@ public class LexiController {
         }
     }
 
-    @PostMapping("/lexi/t/iot/cpi/signals/files")
-    public ResponseEntity<String> singlefile(@RequestParam("files") MultipartFile files,
-                                             @RequestParam Map<String, String> fileDetails) throws IOException,
-            NoSuchAlgorithmException, CertificateException, KeyStoreException {
-
-        //String user = SecurityContextHolder.getContext().getAuthentication().getName();
-        try {
-            String urlfile = lexihost + filesingle;
-            System.out.println("lexi file single--- " + urlfile);
-            System.out.println("payload--- " + fileDetails);
-
-            // Convert the MultipartFile to a resource
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("files", new ByteArrayResource(files.getBytes()) {
-                @Override
-                public String getFilename() {
-                    return files.getOriginalFilename();
-                }
-            });
-
-            // Add other payload parameters
-            for (Map.Entry<String, String> entry : fileDetails.entrySet()) {
-                body.add(entry.getKey(), entry.getValue());
-            }
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            headers.add("Authorization", "Bearer " + tokenService.getToken());
-
-            HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
-            RestTemplate restTemplate = getRestTemplate();
-            String response = restTemplate.exchange(urlfile, HttpMethod.POST, entity, String.class).getBody();
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (HttpStatusCodeException e) {
-            return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
    
-    @GetMapping("/lexi/t/iot/cpi/signals/files/singletype")
-    public ResponseEntity<FileDetailResponse> getSingleType(@RequestParam("userDeviceType") String userDeviceType,
-                                                            @RequestParam("signalType") String signalType,
-                                                            @RequestParam("fileType") String fileType) throws IOException,
-            NoSuchAlgorithmException, CertificateException, KeyStoreException {
-
-        try {
-            String urlsingle = lexihost + singletype.replace("{userDeviceType}", userDeviceType)
-                                               .replace("{signalType}", signalType)
-                                               .replace("{fileType}", fileType);
-            System.out.println("lexi single type URL--- " + urlsingle);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.add("Authorization", "Bearer " + tokenService.getToken());
-
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            RestTemplate restTemplate = getRestTemplate();
-
-            // Capture the raw response
-            String rawResponse = restTemplate.exchange(urlsingle, HttpMethod.GET, entity, String.class).getBody();
-            System.out.println("Raw response from external API: " + rawResponse);
-
-            // Now try to deserialize the response into FileDetailResponse
-            ObjectMapper objectMapper = new ObjectMapper(); // Ensure you have this import
-            FileDetailResponse fileDetailResponse = objectMapper.readValue(rawResponse, FileDetailResponse.class);
-
-            return new ResponseEntity<>(fileDetailResponse, HttpStatus.OK);
-        } catch (HttpStatusCodeException e) {
-            // Handle specific HTTP error responses
-            FileDetailResponse errorResponse = new FileDetailResponse();
-            errorResponse.setFileDetails(Collections.emptyList());
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            // Handle other exceptions
-            FileDetailResponse errorResponse = new FileDetailResponse();
-            errorResponse.setFileDetails(Collections.emptyList());
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
 	@GetMapping("/lexi/t/iot/lexi/dt/search/things/count")
 	public ResponseEntity<String> getcount()
 			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
@@ -257,7 +194,77 @@ public class LexiController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
-     
+	@GetMapping("/lexi/t/iot/lexi/dt/search/things/policycount")
+	public ResponseEntity<String> getpolicycount()
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String url = lexihost + policycountsize;
+			System.out.println("lexi policycountsize type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	@GetMapping("/lexi/t/iot/lexi/dt/search/things/whoami")
+	public ResponseEntity<String> getwhoami()
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+	
+		try {
+			String url = lexihost+whoami;
+			System.out.println("lexi policycountsize type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	@GetMapping("/lexi/t/iot/lexi/dt/search/things/policyuser")
+	public ResponseEntity<String> getpolicyuser()
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+	
+		try {
+			String url = policyuser;
+			System.out.println("lexi policyuser type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer" + tokenService.getToken());
+			System.out.println("Generated Token: " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+		    System.err.println("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+		    return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+		    e.printStackTrace();
+		    return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+
+	}
 	@GetMapping("/lexi/t/iot/lexi/policies")
 	public ResponseEntity<String> getpolicy()
 			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
@@ -282,13 +289,59 @@ public class LexiController {
 		}
 	}
 	
-	@GetMapping("/lexi/t/iot/lexi/policyid")
+	@GetMapping("/lexi/t/iot/lexi/policyidresources")
 	public ResponseEntity<String> getpolicyid(@RequestParam("policy_id") String policy_id)
 			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
 
 		
 		try {
 			String url = lexihost + policyId.replace("<policy_id>", policy_id);
+			System.out.println("lexi policyId type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	@GetMapping("/lexi/t/iot/lexi/policyidsubjects")
+	public ResponseEntity<String> getpolicyidpolicyidsubjects(@RequestParam("policy_id") String policy_id)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String url = lexihost + policyidsubjects.replace("<policy_id>", policy_id);
+			System.out.println("lexi policyId type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	@GetMapping("/lexi/t/iot/lexi/policesearch")
+	public ResponseEntity<String> getpolicyidpolicyidpolicesearch(@RequestParam("policy_id") String policy_id)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+	
+		try {
+			String url = lexihost+policesearch.replace("<policy_id>", policy_id);
 			System.out.println("lexi policyId type URL--- " + url);
 
 			HttpHeaders headers = new HttpHeaders();
@@ -328,7 +381,179 @@ public class LexiController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
-    
+	@GetMapping("/lexi/t/iot/lexi/twinselection")
+	public ResponseEntity<String> gettwinselection(@RequestParam("value") String value)
+	        throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+	    try {
+	    	String quotedValue = "\"" + value + "\"";
+	    	String url = lexihost + twinselectionvalue.replace("<selection_value>", quotedValue);
+
+	        System.out.println("lexi twin type URL--- " + url);
+
+	        HttpHeaders headers = new HttpHeaders();
+	        headers.setContentType(MediaType.APPLICATION_JSON);
+	        headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+	        HttpEntity<String> entity = new HttpEntity<>(headers);
+	        RestTemplate restTemplate = getRestTemplate();
+	        String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+	        return new ResponseEntity<>(response, HttpStatus.OK);
+	    } catch (HttpStatusCodeException e) {
+	        return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+	    } catch (Exception e) {
+	        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+	    }
+	}
+
+	@GetMapping("/lexi/t/iot/lexi/twinselectionvaluesize")
+	public ResponseEntity<String> gettwinselectionvaluesize(@RequestParam("value") String value)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String quotedValue = "\"" + value + "\"";
+			String url = lexihost + twinselectionvaluesize.replace("<selection_value>", quotedValue);
+			System.out.println("lexi twin type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	@GetMapping("/lexi/t/iot/lexi/twinidsearch")
+	public ResponseEntity<String> gettwinkidsearch(@RequestParam("twin_id") String twin_id)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String url = lexihost + twinIdsearch.replace("<twin_id>", twin_id);
+			System.out.println("lexi twin type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	@GetMapping("/lexi/t/iot/lexi/fildsdandid")
+	public ResponseEntity<String> getfildsdandid(@RequestParam("id") String id)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String url = lexihost + fildsdandid.replace("<id>",id);
+			System.out.println("lexi twin type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	@GetMapping("/lexi/t/iot/lexi/twinidthings")
+	public ResponseEntity<String> gettwinkidthings(@RequestParam("thingID") String thingID)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String url = lexihost + twinthings.replace("<thingID>", thingID);
+			System.out.println("lexi twinid things type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	//featuresugnalset
+	@GetMapping("/lexi/t/iot/lexi/featuresugnalset")
+	public ResponseEntity<String> gettwinkfeaturesugnalset(@RequestParam("featuresugnalset_name") String featuresugnalset_name)
+			throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+		
+		try {
+			String url = lexihost + featuresugnalset.replace("<featuresugnalset_name>", featuresugnalset_name);
+			System.out.println("lexi featuresugnalset_name type URL--- " + url);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = getRestTemplate();
+			String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+			return new ResponseEntity<String>(response, HttpStatus.OK);
+		} catch (HttpStatusCodeException e) {
+			return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+	}
+	 @GetMapping("/lexi/t/iot/cpi/file/graph")
+	    public ResponseEntity<?> getfile(@RequestParam("userDeviceType") String userDeviceType,
+	                                                            @RequestParam("signalType") String signalType,
+	                                                            @RequestParam("version") String version) throws IOException,
+	            NoSuchAlgorithmException, CertificateException, KeyStoreException {
+
+	        try {
+	            String urlfile =  filed3.replace("{userDeviceType}", userDeviceType)
+	                                               .replace("{signalType}", signalType)
+	                                               .replace("{version}", version);
+	            System.out.println("lexi filde d3 type URL--- " + urlfile);
+
+	            HttpHeaders headers = new HttpHeaders();
+	            headers.setContentType(MediaType.APPLICATION_JSON);
+	            headers.add("Authorization", "Bearer " + tokenService.getToken());
+
+	            HttpEntity<String> entity = new HttpEntity<>(headers);
+	            RestTemplate restTemplate = getRestTemplate();
+
+	            // Capture the raw response
+	            String rawResponse = restTemplate.exchange(urlfile, HttpMethod.GET, entity, String.class).getBody();
+	           
+	        	return new ResponseEntity<String>(rawResponse, HttpStatus.OK);
+			} catch (HttpStatusCodeException e) {
+				return new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+			} catch (Exception e) {
+				return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			}
+	    }
+
 	/*
 	 * @GetMapping("/lexi/t/iot/cpi/signals/files/singletype") public
 	 * ResponseEntity<String> getSingleType(@RequestParam("userDeviceType") String
