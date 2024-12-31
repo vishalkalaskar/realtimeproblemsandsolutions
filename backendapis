@@ -381,6 +381,9 @@ public class TwinExplorer {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
+//lexi twin type URL--- https://172.22.101.72:8343/t/iot/lexi/dt/search/things/count?filter=eq(attributes/twinType,"vehicle")
+//lexi twin type URL--- https://172.22.101.72:8343/t/iot/lexi/dt/search/things?filter=eq(attributes/twinType,"vehicle")&fields=thingId&option=size(10)
+
 	@GetMapping("/lexi/t/iot/lexi/twinselection")
 	public ResponseEntity<String> gettwinselection(@RequestParam("value") String value)
 	        throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
